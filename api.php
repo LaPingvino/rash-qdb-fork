@@ -2,11 +2,7 @@
 
 require_once('settings.php');
 require_once('DB.php');
-
-define('USER_SUPERUSER', 1);
-define('USER_ADMIN', 2);
-define('USER_MOD', 3);
-define('USER_NORMAL', 4);
+require_once('common.php');
 
 function emit($data)
 {

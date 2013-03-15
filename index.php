@@ -10,21 +10,11 @@ if (!file_exists('settings.php')) {
     exit;
 }
 
-define('USER_SUPERUSER', 1);
-define('USER_ADMIN', 2);
-define('USER_MOD', 3);
-define('USER_NORMAL', 4);
-
-$user_levels = array(USER_SUPERUSER => 'superuser',
-		     USER_ADMIN => 'administrator',
-		     USER_MOD => 'moderator',
-		     USER_NORMAL => 'user');
-
 session_start();
 
 require_once 'DB.php';
-
 require('settings.php');
+require_once('common.php');
 
 if (!isset($CONFIG['quote_list_limit']) || !is_int($CONFIG['quote_list_limit'])) $CONFIG['quote_list_limit'] = 50;
 if (!isset($CONFIG['rss_entries']) || ($CONFIG['rss_entries'] < 1)) $CONFIG['rss_entries'] = 15;
