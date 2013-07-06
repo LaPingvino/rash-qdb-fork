@@ -1,9 +1,9 @@
 <?php
 
-if (isset($_GET['debug'])) {
+//if (isset($_GET['debug'])) {
     error_reporting(E_ALL);
     ini_set('display_errors','On');
-}
+//}
 
 if (!file_exists('settings.php')) {
     header("Location: install.php");
@@ -12,7 +12,6 @@ if (!file_exists('settings.php')) {
 
 session_start();
 
-require_once 'DB.php';
 require('settings.php');
 require_once('common.php');
 
@@ -20,6 +19,7 @@ if (!isset($CONFIG['quote_list_limit']) || !is_int($CONFIG['quote_list_limit']))
 if (!isset($CONFIG['rss_entries']) || ($CONFIG['rss_entries'] < 1)) $CONFIG['rss_entries'] = 15;
 if (!isset($CONFIG['min_quote_length'])) $CONFIG['min_quote_length'] = 15;
 
+require('db.php');
 require('util_funcs.php');
 
 require("language/{$CONFIG['language']}.lng");
@@ -41,22 +41,7 @@ mk_cookie('lastvisit', time());
 
 set_voteip($CONFIG['secret_salt']);
 
-$dsn = array(
-	     'phptype'  => $CONFIG['phptype'],
-	     'username' => $CONFIG['username'],
-	     'password' => $CONFIG['password'],
-	     'hostspec' => $CONFIG['hostspec'],
-	     'port'     => $CONFIG['port'],
-	     'socket'   => $CONFIG['socket'],
-	     'database' => $CONFIG['database'],
-	     );
-$db =& DB::connect($dsn);
-if (DB::isError($db)) {
-    $TEMPLATE->printheader('Error');
-    print $db->getMessage();
-    $TEMPLATE->printfooter();
-    exit;
-}
+$db = get_db($CONFIG, $TEMPLATE);
 
 autologin();
 
@@ -112,11 +97,8 @@ $TEMPLATE->set_menu(1, $adminmenu);
 
 function get_db_stats()
 {
-    global $db;
-
-    $ret['pending_quotes'] = $db->getOne('select count(id) from '.db_tablename('quotes').' where queue=1');
-    $ret['approved_quotes'] = $db->getOne('SELECT COUNT(id) FROM '.db_tablename('quotes').' where queue=0');
-
+    $ret['pending_quotes'] = db_query_singlevalue('select count(id) from '.db_tablename('quotes').' where queue=1');
+    $ret['approved_quotes'] = db_query_singlevalue('select count(id) from '.db_tablename('quotes').' where queue=0');
     return $ret;
 }
 
@@ -138,11 +120,10 @@ function handle_captcha($type, $func, &$param=null)
 
 function rash_rss()
 {
-    global $db, $CONFIG, $TEMPLATE;
-    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 ORDER BY id DESC LIMIT ".$CONFIG['rss_entries'];
-    $res =& $db->query($query);
+    global $CONFIG, $TEMPLATE;
+    $res = db_query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 ORDER BY id DESC LIMIT ?", $CONFIG['rss_entries']);
     $items = '';
-    while($row=$res->fetchRow(DB_FETCHMODE_ASSOC)) {
+    while($row=$res->fetch()) {
 	$title = $CONFIG['rss_url']."/?".$row['id'];
 	$desc = mangle_quote_text(htmlspecialchars($row['quote']));
 	$items .= $TEMPLATE->rss_feed_item($title, $desc, $title);
@@ -152,7 +133,7 @@ function rash_rss()
 
 function flag_do_inner($row)
 {
-    global $TEMPLATE, $db;
+    global $TEMPLATE;
     if($row['flag'] == 2){
 	$TEMPLATE->add_message(lang('flag_previously_flagged'));
     }
@@ -161,7 +142,7 @@ function flag_do_inner($row)
     }
     else{
 	$TEMPLATE->add_message(lang('flag_quote_flagged'));
-	$db->query("UPDATE ".db_tablename('quotes')." SET flag = 1 WHERE id = ".$db->quote((int)$row['id']));
+	db_query("UPDATE ".db_tablename('quotes')." SET flag = 1 WHERE id = ?", $row['id']);
 	$row['flag'] = 1;
     }
     return $row;
@@ -171,8 +152,7 @@ function flag($quote_num, $method)
 {
     global $CONFIG, $TEMPLATE, $CAPTCHA, $db;
 
-    $res =& $db->query("SELECT id,flag,quote FROM ".db_tablename('quotes')." WHERE id = ".$db->quote((int)$quote_num)." LIMIT 1");
-    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+    $row = $db->query("SELECT id,flag,quote FROM ".db_tablename('quotes')." WHERE id = ".$db->quote((int)$quote_num)." LIMIT 1")->fetch();
 
     if ($method == 'verdict') {
 	$row = handle_captcha('flag', 'flag_do_inner', $row);
@@ -191,7 +171,7 @@ function vote($quote_num, $method, $ajaxy=FALSE)
 {
     global $db, $TEMPLATE;
 
-    $qid = $db->getOne("SELECT quote_id FROM ".db_tablename('tracking')." WHERE user_ip=".$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quote_num));
+    $qid = $db->query("SELECT quote_id FROM ".db_tablename('tracking')." WHERE user_ip=".$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quote_num))->fetch();
     if (isset($qid) && $qid == $quote_num) {
 	if ($ajaxy) return 'ALREADY_VOTED';
 	$TEMPLATE->add_message(lang('tracking_check_2'));
@@ -217,10 +197,9 @@ function vote($quote_num, $method, $ajaxy=FALSE)
 function news_page()
 {
     global $db, $TEMPLATE, $CONFIG;
-    $res =& $db->query("SELECT * FROM ".db_tablename('news')." ORDER BY date desc");
+    $res = $db->query("SELECT * FROM ".db_tablename('news')." ORDER BY date desc");
     $news = '';
-
-    while ($row=$res->fetchRow(DB_FETCHMODE_ASSOC)) {
+    while ($row = $res->fetch()) {
 	$news .= $TEMPLATE->news_item($row['news'], date($CONFIG['news_time_format'], $row['date']));
     }
     print $TEMPLATE->news_page($news);
@@ -230,14 +209,15 @@ function home_generation()
 {
     global $db, $TEMPLATE, $CONFIG;
 
-    $res =& $db->query("SELECT * FROM ".db_tablename('news')." ORDER BY date desc LIMIT 5");
-    if(DB::isError($res)){
-	die($res->getMessage());
-    }
+    $sql = 'SELECT * FROM '.db_tablename('news').' ORDER BY date desc LIMIT 5';
+
+    $stmt = $db->query($sql);
+
+    check_db_res($stmt, $sql);
 
     $news = '';
 
-    while ($row=$res->fetchRow(DB_FETCHMODE_ASSOC)) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 	$news .= $TEMPLATE->news_item($row['news'], date($CONFIG['news_time_format'], $row['date']));
     }
 
@@ -250,7 +230,7 @@ function home_generation()
 function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 {
     global $CONFIG, $db;
-    $numrows = $db->getOne("SELECT COUNT(id) FROM ".db_tablename('quotes').' WHERE queue=0');
+    $numrows = $db->query("SELECT COUNT(id) as cnt FROM ".db_tablename('quotes').' WHERE queue=0')->fetch()['cnt'];
     $testrows = $numrows;
 
     $pagenum = 0;
@@ -327,11 +307,12 @@ function user_can_vote_quote($quoteid)
 {
     global $CONFIG, $db;
 
-    $res =& $db->query('select vote from '.db_tablename('tracking').' where user_ip='.$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quoteid));
+    $row = $db->query('select vote from '.db_tablename('tracking').' where user_ip='.$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quoteid))->fetch();
+    /*
     if (DB::isError($res)) {
 	die('user_can_vote_quote():'.$res->getMessage());
     }
-    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+    */
 
     if (isset($CONFIG['login_required']) && ($CONFIG['login_required'] == 1) && !isset($_SESSION['logged_in']))
 	return 2;
@@ -344,18 +325,6 @@ function user_can_vote_quote($quoteid)
 /************************************************************************
 ************************************************************************/
 
-// quote_generation()
-//
-// This is the rugged function that pulls quotes out of the quotes table
-// on the database and presents them to the viewer.
-//
-// The $query variable is usually gotten from index.php (anyplace can call this
-// function) and is a string containing the database query to be used to retrieve
-// information from the database.
-//
-// Keep in mind that this query should be able to be used in a numerous amount of
-// databases because of PEAR::DB.
-//
 function quote_generation($query, $origin, $page = 1, $quote_limit = 50, $page_limit = 10)
 {
     global $CONFIG, $TEMPLATE, $db;
@@ -371,15 +340,16 @@ function quote_generation($query, $origin, $page = 1, $quote_limit = 50, $page_l
 	$query .= "LIMIT $low_lim,$quote_limit";
     }
 
-    $res =& $db->query($query);
-    if (DB::isError($res)) {
+    $res = $db->query($query);
+    if (!$res) {
 	print '<p>Query: '.$query.'<p>';
-	die($res->getMessage());
+	print_r($db->errorInfo());
+	die();
     }
 
     $nquotes = 0;
     $inner = '';
-    while($row=$res->fetchRow(DB_FETCHMODE_ASSOC)){
+    while ($row = $res->fetch()) {
 	$nquotes++;
 	$canvote = user_can_vote_quote($row['id']);
 	$datefmt = date($CONFIG['quote_time_format'], $row['date']);
@@ -399,19 +369,18 @@ function edit_news($method, $id)
     $news = '';
 
     if ($method == 'edit') {
-	$res =& $db->query("SELECT * FROM ".db_tablename('news')." where id=".$db->quote((int)$id));
-	$row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$row = $db->query("SELECT * FROM ".db_tablename('news')." where id=".$db->quote((int)$id))->fetch();
 	$newstxt = preg_replace('/\<br \/\>/', '', $row['news']);
 	$news = $TEMPLATE->edit_news_form($row['id'], $newstxt);
     } else if ($method == 'update') {
 	if (isset($_POST['preview'])) {
 	    $newstxt = nl2br(trim($_POST['news']));
-	    $news = $TEMPLATE->news_item($newstxt, date($CONFIG['news_time_format'], mktime()));
+	    $news = $TEMPLATE->news_item($newstxt, date($CONFIG['news_time_format'], time()));
 	    $newstxt = preg_replace('/\<br \/\>/', '', $newstxt);
 	    $news .= $TEMPLATE->edit_news_form($id, $newstxt);
 	} else if (isset($_POST['delete'])) {
 	    if (isset($_POST['verify_delete'])) {
-		$res =& $db->query("DELETE FROM ".db_tablename('news')." where id=".$db->quote((int)$id));
+		$db->query("DELETE FROM ".db_tablename('news')." where id=".$db->quote((int)$id));
 		$TEMPLATE->add_message(lang('news_item_deleted'));
 	    } else {
 		$newstxt = trim($_POST['news']);
@@ -426,8 +395,8 @@ function edit_news($method, $id)
 	}
     }
 
-    $res =& $db->query("SELECT * FROM ".db_tablename('news')." ORDER BY date DESC");
-    while ($row=$res->fetchRow(DB_FETCHMODE_ASSOC)) {
+    $res = $db->query("SELECT * FROM ".db_tablename('news')." ORDER BY date DESC");
+    while ($row = $res->fetch()) {
 	$mode = 1;
 	if ($row['id'] == $id) $mode = 2;
 	$news .= $TEMPLATE->news_item($row['news'], date($CONFIG['news_time_format'], $row['date']), $row['id'], $mode);
@@ -446,9 +415,9 @@ function add_news($method)
 	$rawnews = trim($_POST['news']);
 	$news = nl2br($rawnews);
 	if (isset($_POST['preview'])) {
-	    $innerhtml = $TEMPLATE->news_item($news, date($CONFIG['news_time_format'], mktime()));
+	    $innerhtml = $TEMPLATE->news_item($news, date($CONFIG['news_time_format'], time()));
 	} else {
-	    $db->query("INSERT INTO ".db_tablename('news')." (news,date) VALUES(".$db->quote($news).", '".mktime()."');");
+	    $db->query("INSERT INTO ".db_tablename('news')." (news,date) VALUES(".$db->quote($news).", ".time().");");
 	    $TEMPLATE->add_message(lang('news_added'));
 	    $rawnews = '';
 	}
@@ -477,8 +446,11 @@ function username_exists($name)
 {
     global $db;
     $name = strtolower($name);
-    $ret = $db->getOne('select count(1) from '.db_tablename('users').' where LOWER(user)='.$db->quote($name));
-    if ($ret > 0) return TRUE;
+    $sql = 'select count(1) as cnt from '.db_tablename('users').' where LOWER(user)='.$db->quote($name);
+    $res = $db->query($sql);
+    check_db_res($res, $sql);
+    $ret = $res->fetch();
+    if ($ret['cnt'] > 0) return TRUE;
     return FALSE;
 }
 
@@ -506,13 +478,12 @@ function register_user_do_inner($row)
     $password = $row['password'];
     $salt = str_rand();
     $level = USER_NORMAL;
-    $res =& $db->query("INSERT INTO ".db_tablename('users')." (user, password, level, salt) VALUES(".$db->quote($username).", '".crypt($password, "\$1\$".substr($salt, 0, 8)."\$")."', ".$db->quote((int)$level).", '\$1\$".$salt."\$');");
-    if (DB::isError($res)) {
+    $db->query("INSERT INTO ".db_tablename('users')." (user, password, level, salt) VALUES(".$db->quote($username).", '".crypt($password, "\$1\$".substr($salt, 0, 8)."\$")."', ".$db->quote((int)$level).", '\$1\$".$salt."\$');");
+    /*if (DB::isError($res)) {
 	$TEMPLATE->add_message($res->getMessage());
-    } else $TEMPLATE->add_message(sprintf(lang('user_added'), htmlspecialchars($username)));
+    } else*/ $TEMPLATE->add_message(sprintf(lang('user_added'), htmlspecialchars($username)));
 
-    $res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE user=".$db->quote($username));
-    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+    $row = $db->query("SELECT * FROM ".db_tablename('users')." WHERE user=".$db->quote($username))->fetch();
     set_user_logged($row);
     return $row;
 }
@@ -538,10 +509,10 @@ function add_user($method)
     if ($method == 'update') {
 	$username = trim($_POST['username']);
 	if (check_username($username)) {
-	    $res =& $db->query("INSERT INTO ".db_tablename('users')." (user, password, level, salt) VALUES(".$db->quote($username).", '".crypt($_POST['password'], "\$1\$".substr($_POST['salt'], 0, 8)."\$")."', ".$db->quote((int)$_POST['level']).", '\$1\$".$_POST['salt']."\$');");
-	    if (DB::isError($res)) {
+	    $db->query("INSERT INTO ".db_tablename('users')." (user, password, level, salt) VALUES(".$db->quote($username).", '".crypt($_POST['password'], "\$1\$".substr($_POST['salt'], 0, 8)."\$")."', ".$db->quote((int)$_POST['level']).", '\$1\$".$_POST['salt']."\$');");
+	    /*if (DB::isError($res)) {
 		$TEMPLATE->add_message($res->getMessage());
-	    } else $TEMPLATE->add_message(sprintf(lang('user_added'), htmlspecialchars($username)));
+		} else*/ $TEMPLATE->add_message(sprintf(lang('user_added'), htmlspecialchars($username)));
 	}
     }
 
@@ -555,8 +526,8 @@ function change_pw($method, $who)
 	// created to keep errors at a minimum
 	$row['salt'] = 0;
 
-	$res =& $db->query("SELECT `password`, salt FROM ".db_tablename('users')." WHERE id=".$db->quote((int)$who));
-	$row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$row = $db->query("SELECT `password`, salt FROM ".db_tablename('users')." WHERE id=".$db->quote((int)$who))->fetch();
+	//$row = $res->fetchRow(DB_FETCHMODE_ASSOC);
 
 	$salt = "\$1\$".str_rand()."\$";
 	if ($_POST['new_password'] == '') {
@@ -579,8 +550,8 @@ function edit_users($method, $who)
     global $CONFIG, $TEMPLATE, $db;
     if ($method == 'delete') {	// delete a user from users
 	if (isset($_POST['verify'])) {
-	    $res =& $db->query("SELECT * FROM ".db_tablename('users'));
-	    while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
+	    $res = db_query("SELECT * FROM ".db_tablename('users'));
+	    while ($row = $res->fetch()) {
 		if(isset($_POST['d'.$row['id']])){
 		    $db->query("DELETE FROM ".db_tablename('users')." WHERE id='{$_POST['d'.$row['id']]}'");
 		    $TEMPLATE->add_message(sprintf(lang('user_removed'), htmlspecialchars($row['user'])));
@@ -597,16 +568,15 @@ function edit_users($method, $who)
 	    }
 	}
     } else if ($method == 'edit') {
-	$res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE id=".$db->quote((int)$who));
-	$row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$row = $db->query("SELECT * FROM ".db_tablename('users')." WHERE id=".$db->quote((int)$who))->fetch();
 	if (isset($row['user']))
 	    print $TEMPLATE->edit_user_page_form($row['id'], $who, htmlspecialchars($row['user']), $row['level']);
     }
 
     $innerhtml = '';
 
-    $res =& $db->query("SELECT * FROM ".db_tablename('users')." ORDER BY level asc, user desc");
-    while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
+    $res = $db->query("SELECT * FROM ".db_tablename('users')." ORDER BY level asc, user desc");
+    while ($row = $res->fetch()) {
 	$innerhtml .= $TEMPLATE->edit_user_page_table_row($row['id'], htmlspecialchars($row['user']), htmlspecialchars($row['password']), $row['level']);
     }
     print $TEMPLATE->edit_user_page_table($innerhtml);
@@ -616,18 +586,15 @@ function userlogin($method)
 {
     global $CONFIG, $TEMPLATE, $db;
     if ($method == 'login') {
-	$res =& $db->query("SELECT salt FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username'])));
-	$salt = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$salt = $db->query("SELECT salt FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username'])))->fetch();
 
 	// if there is no presence of a salt, it is probably md5 since old rash used plain md5
 	if(!$salt['salt']){
-	    $res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".md5($_POST['rash_password'])."'");
-	    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	    $row = $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".md5($_POST['rash_password'])."'")->fetch();
 	}
 	// if there is presense of a salt, it is probably new rash passwords, so it is salted md5
 	else{
-	    $res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".crypt($_POST['rash_password'], $salt['salt'])."'");
-	    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	    $row = $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".crypt($_POST['rash_password'], $salt['salt'])."'")->fetch();
 	}
 
 	// if there is no row returned for the user, the password is expected to be false because of the AND conditional in the query
@@ -644,18 +611,15 @@ function adminlogin($method)
 {
     global $CONFIG, $TEMPLATE, $db;
     if ($method == 'login') {
-	$res =& $db->query("SELECT salt FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username'])));
-	$salt = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$salt = $db->query("SELECT salt FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username'])))->fetch();
 
 	// if there is no presence of a salt, it is probably md5 since old rash used plain md5
 	if(!$salt['salt']){
-	    $res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".md5($_POST['rash_password'])."'");
-	    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	    $row = $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".md5($_POST['rash_password'])."'")->fetch();
 	}
 	// if there is presense of a salt, it is probably new rash passwords, so it is salted md5
 	else{
-	    $res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".crypt($_POST['rash_password'], $salt['salt'])."'");
-	    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	    $row = $db->query("SELECT * FROM ".db_tablename('users')." WHERE LOWER(user)=".$db->quote(strtolower($_POST['rash_username']))." AND `password` ='".crypt($_POST['rash_password'], $salt['salt'])."'")->fetch();
 	}
 
 	// if there is no row returned for the user, the password is expected to be false because of the AND conditional in the query
@@ -673,16 +637,16 @@ function quote_queue($method)
 {
     global $CONFIG, $TEMPLATE, $db;
     if ($method == 'judgement') {
-	$res =& $db->query("SELECT * FROM ".db_tablename('quotes').' where queue=1');
 	$x = 0;
-	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)){
-	    if ($_POST['q'.$row['id']]) {
+	$sth = $db->query("SELECT * FROM ".db_tablename('quotes').' where queue=1');
+	while ($row = $sth->fetch()) {
+	    if (isset($_POST['q'.$row['id']])) {
 		$judgement_array[$x] = $_POST['q'.$row['id']];
 		$x++;
 	    }
 	}
 	$x = 0;
-	while ($judgement_array[$x]) {
+	while (isset($judgement_array[$x])) {
 	    if(substr($judgement_array[$x], 0, 1) == 'y'){
 		$db->query("UPDATE ".db_tablename('quotes')." SET queue=0 WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
 		$TEMPLATE->add_message(sprintf(lang('quote_accepted'), substr($judgement_array[$x], 1)));
@@ -694,14 +658,11 @@ function quote_queue($method)
 	}
     }
 
-    $res =& $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=1 order by id asc");
-    if (DB::isError($res)){
-	die($res->getMessage());
-    }
+    $res = $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=1 order by id asc");
 
     $innerhtml = '';
     $x = 0;
-    while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
+    while ($row = $res->fetch()) {
 	$innerhtml .= $TEMPLATE->quote_queue_page_iter($row['id'], mangle_quote_text($row['quote']));
 	$x++;
     }
@@ -709,10 +670,6 @@ function quote_queue($method)
     print $TEMPLATE->quote_queue_page($innerhtml);
 }
 
-
-// flag_queue($method)
-//
-//
 
 function flag_queue($method)
 {
@@ -729,10 +686,9 @@ function flag_queue($method)
 		}
 	    }
 
-	    $res =& $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE flag = 1");
-
 	    $x = 0;
-	    while($row = $res->fetchRow(DB_FETCHMODE_ASSOC)){
+	    $res = $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE flag = 1");
+	    while($row = $res->fetch()) {
 		if (isset($_POST['q'.$row['id']])) {
 		    $judgement_array[$x] = $_POST['q'.$row['id']];
 		    $x++;
@@ -753,12 +709,11 @@ function flag_queue($method)
 	    }
 	}
 
-	$res =& $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE flag = 1 ORDER BY id ASC");
-
 	$innerhtml = '';
 
 	$x = 0;
-	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
+	$res = $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE flag = 1 ORDER BY id ASC");
+	while ($row = $res->fetch()) {
 	    $innerhtml .= $TEMPLATE->flag_queue_page_iter($row['id'], mangle_quote_text($row['quote']));
 	    $x++;
 	}
@@ -795,13 +750,14 @@ function search($method, $searchparam=null)
 	    $how = 'asc';
 
 	$limit = (isset($_POST['number']) ? $_POST['number'] : 10);
+	if (!preg_match('/^[0-9]+$/', $limit)) $limit = 10;
 
 	$searchx = '%'.$search.'%';
 
-	$query = "SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 and (quote LIKE ".$db->quote($searchx).$exactmatch.") ORDER BY ".$sortby." $how LIMIT ".$db->quote((int)$limit);
+	$query = "SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 and (quote LIKE ".$db->quote($searchx).$exactmatch.") ORDER BY ".$sortby." $how LIMIT ".$limit;
 
 	quote_generation($query, lang('search_results_title'), -1);
-    }
+    } else $search = '';
 
     print $TEMPLATE->search_quotes_page(($method == 'fetch'), htmlspecialchars($search));
 }
@@ -820,12 +776,10 @@ function edit_quote($method, $quoteid)
 
 	$innerhtml = $TEMPLATE->edit_quote_outputmsg(mangle_quote_text($quotxt));
 
-	$res =& $db->query("UPDATE ".db_tablename('quotes')." SET quote=".$db->quote($quotxt)." WHERE id=".$db->quote($quoteid));
-	if(DB::isError($res)){
-	    die($res->getMessage());
-	}
+	$db->query("UPDATE ".db_tablename('quotes')." SET quote=".$db->quote($quotxt)." WHERE id=".$db->quote($quoteid));
     } else {
-	$quotxt = $db->getOne("SELECT quote FROM ".db_tablename('quotes')." WHERE id=".$db->quote($quoteid));
+	$tmp = $db->query("SELECT quote FROM ".db_tablename('quotes')." WHERE id=".$db->quote($quoteid))->fetch();
+	$quotxt = $tmp['quote'];
     }
 
     print $TEMPLATE->edit_quote_page($quoteid, $quotxt, $innerhtml);
@@ -838,10 +792,7 @@ function add_quote_do_inner()
     $flag = (isset($CONFIG['auto_flagged_quotes']) && ($CONFIG['auto_flagged_quotes'] == 1)) ? 2 : 0;
     $quotxt = htmlspecialchars(trim($_POST["rash_quote"]));
     $innerhtml = $TEMPLATE->add_quote_outputmsg(mangle_quote_text($quotxt));
-    $res =& $db->query("INSERT INTO ".db_tablename('quotes')." (quote, rating, flag, queue, date) VALUES(".$db->quote($quotxt).", 0, ".$flag.", ".$CONFIG['moderated_quotes'].", '".mktime()."')");
-    if(DB::isError($res)){
-	die($res->getMessage());
-    }
+    $db->query("INSERT INTO ".db_tablename('quotes')." (quote, rating, flag, queue, date) VALUES(".$db->quote($quotxt).", 0, ".$flag.", ".$CONFIG['moderated_quotes'].", ".time().")");
     return $innerhtml;
 }
 
@@ -851,6 +802,7 @@ function add_quote($method)
 
     $innerhtml = '';
     $quotxt = '';
+    $added = 0;
 
     if ($method == 'submit') {
 	$quotxt = htmlspecialchars(trim($_POST["rash_quote"]));
@@ -963,7 +915,7 @@ switch($page[0])
 	case 'latest':
 	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 ".$voteable." ORDER BY q.id DESC LIMIT ".$limit;
 	    if (isset($_SESSION['lastvisit'])) {
-		$nlatest = $db->getOne("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable);
+		$nlatest = $db->query("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable)->fetch();
 		if (($nlatest >= $CONFIG['min_latest']) && ($nlatest <= $CONFIG['quote_list_limit'])) {
 		    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable." ORDER BY q.id DESC";
 		}
@@ -1059,4 +1011,4 @@ switch($page[0])
 if(!($page[0] === 'rss' || $page[0] === 'ajaxvote'))
     $TEMPLATE->printfooter(get_db_stats());
 
-$db->disconnect();
+$db = null;

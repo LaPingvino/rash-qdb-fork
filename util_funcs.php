@@ -40,9 +40,11 @@ function autologin()
 	$user = $_COOKIE['user'];
 	$userid = $_COOKIE['userid'];
 
-	$res =& $db->query("SELECT * FROM ".db_tablename('users')." WHERE id=".$db->quote((int)$userid)." AND user=".$db->quote($user));
-	if (DB::isError($res)) return;
-	$row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$sql = 'SELECT * FROM '.db_tablename('users').' WHERE id='.$db->quote((int)$userid).' AND user='.$db->quote($user);
+
+	$row = $db->query($sql)->fetch();
+	check_db_res($row, $sql);
+
 	if (!isset($row['password'])) return;
 	$passchk = md5($row['password'].$row['salt']);
 	if ($pass == $passchk) {

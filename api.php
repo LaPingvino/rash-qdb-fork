@@ -1,8 +1,14 @@
 <?php
 
+    error_reporting(E_ALL);
+    ini_set('display_errors','On');
+
 require_once('settings.php');
-require_once('DB.php');
+require('db.php');
 require_once('common.php');
+require('util_funcs.php');
+
+$db = get_db($CONFIG);
 
 function emit($data)
 {
@@ -75,32 +81,9 @@ function check_cmd_auth($params)
     return $cmd;
 }
 
-
-function get_db($params)
-{
-    $dsn = array(
-	     'phptype'  => $params['phptype'],
-	     'username' => $params['username'],
-	     'password' => $params['password'],
-	     'hostspec' => $params['hostspec'],
-	     'port'     => $params['port'],
-	     'socket'   => $params['socket'],
-	     'database' => $params['database'],
-	     );
-    $db =& DB::connect($dsn);
-    if (DB::isError($db)) {
-        die($db->getMessage());
-    }
-    return $db;
-}
 function dbintify($db, $data, $def=0)
 {
     return $db->quote((int)$data,$def);
-}
-
-function tablename($params, $name)
-{
-    return $params['db_table_prefix'].'_'.$name;
 }
 
 function login($db, $params)
@@ -116,27 +99,26 @@ function login($db, $params)
     $username = $params['rash_username'];
     $password = $params['rash_password'];
 
-    //$tablename = $params['db_table_prefix'].'_users';
-    $tablename = tablename($params, 'users');
+    $tablename = db_tablename('users', $params);
 
     $ret['login_user'] = $username;
 
     $q = "SELECT salt FROM ".$tablename." WHERE LOWER(user)=".$db->quote(strtolower($username));
-	$res =& $db->query($q);
-	$salt = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	$res = db_query($q);
+	$salt = $res->fetch();
 
     $sel = "SELECT * FROM ".$tablename." WHERE LOWER(user)=".$db->quote(strtolower($username));
 	// if there is no presence of a salt, it is probably md5 since old rash used plain md5
 	if (!$salt['salt']) {
         $q = $sel." AND `password` ='".md5($password)."'";
-	    $res =& $db->query($q);
-	    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	    $res = db_query($q);
+	    $row = $res->fetch();
 	}
 	// if there is presense of a salt, it is probably new rash passwords, so it is salted md5
 	else {
         $q = $sel." AND `password` ='".crypt($password, $salt['salt'])."'";
-	    $res =& $db->query($q);
-	    $row = $res->fetchRow(DB_FETCHMODE_ASSOC);
+	    $res = db_query($q);
+	    $row = $res->fetch();
 	}
 
 	// if there is no row returned for the user, the password is expected to be false because of the AND conditional in the query
@@ -153,44 +135,38 @@ function login($db, $params)
 
 function make_query($db, $sql)
 {
-    $res =& $db->query($sql);
-    if (DB::isError($res)) {
-        die($res->getMessage());
-    }
-    while ($res->fetchInto($row, DB_FETCHMODE_ASSOC)) {
+    $res = db_query($sql);
+    while ($row = $res->fetch()) {
         $ret[] = $row;
     }
     return $ret;
 }
 function make_query_one($db, $sql, $index = null)
 {
-    $res =& $db->query($sql);
-    if (DB::isError($res)) {
-        die($res->getMessage());
-    }
-    $res->fetchInto($row, DB_FETCHMODE_ASSOC, $index);
-    return $row;
+    $res = db_query($sql);
+    $row = $res->fetchAll(PDO::FETCH_ASSOC);
+    return (isset($index)) ? $row[$index] : $row;
 }
 
 function do_napproved($db, $params)
 {
-    $qt = tablename($params, 'quotes');
-    return array('napproved' => $db->getOne('SELECT COUNT(id) FROM '.$qt.' where queue=0'));
+    $qt = db_tablename('quotes', $params);
+    return array('napproved' => db_query_singlevalue('SELECT COUNT(id) FROM '.$qt.' where queue=0'));
 }
 function do_npending($db, $params)
 {
-    $qt = tablename($params, 'quotes');
-    return array('npending' => $db->getOne('SELECT COUNT(id) FROM '.$qt.' where queue=1'));
+    $qt = db_tablename('quotes', $params);
+    return array('npending' => db_query_singlevalue('SELECT COUNT(id) FROM '.$qt.' where queue=1'));
 }
 function do_add($db, $params)
 {
-    $qt = tablename($params, 'quotes');
+    $qt = db_tablename('quotes', $params);
     $quote = $db->quote(stripcslashes($params['quote']));
 
     $flag = (isset($params['auto_flagged_quotes']) && ($params['auto_flagged_quotes'] == 1)) ? 2 : 0;
     $premod = $params['moderated_quotes'];
-    $t = mktime();
-    $db->query("INSERT INTO $qt (quote, rating, flag, queue, date) VALUES($quote, 0, $flag, $premod, '$t')");
+    $t = time();
+    $db->query("INSERT INTO $qt (quote, rating, flag, queue, date) VALUES($quote, 0, $flag, $premod, $t)");
     return make_query_one($db, "SELECT id FROM $qt where quote=$quote and date=$t");
 }
 function do_vote($db, $params)
@@ -204,37 +180,37 @@ function do_flag($db, $params)
 function do_get($db, $params)
 {
     $qid = $params['qid'];
-    $qt = tablename($params, 'quotes');
+    $qt = db_tablename('quotes', $params);
     return make_query_one($db, 'SELECT * FROM '.$qt.' where id='.$qid);
 }
 function do_latest($db, $params)
 {
-    $qt = tablename($params, 'quotes');
+    $qt = db_tablename('quotes', $params);
     $since = $params['since'];
     return make_query($db, "SELECT * from $qt where queue=0 and date>=$since");
 }
 function do_last($db, $params)
 {
-    $qt = tablename($params, 'quotes');
+    $qt = db_tablename('quotes', $params);
     return make_query_one($db, "SELECT * FROM ".$qt." WHERE queue=0 ORDER BY id DESC LIMIT 1");
 }
 function do_random($db, $params)
 {
-    $qt = tablename($params, 'quotes');
-    $count = $db->getOne('SELECT COUNT(id) FROM '.$qt.' where queue=0');
+    $qt = db_tablename('quotes', $params);
+    $count = db_query_singlevalue('SELECT COUNT(id) FROM '.$qt.' where queue=0');
     $index = rand(0,$count-1);
     return make_query_one($db, 'SELECT * FROM '.$qt.' where queue=0', $index);
 }
 function do_search($db, $params)
 {
-    $qt = tablename($params, 'quotes');
+    $qt = db_tablename('quotes', $params);
     $pattern = $params['pattern'];
     return make_query($db, "SELECT * FROM $qt where queue=0 and quote like \"%$pattern%\"");
 }
 
 function do_approve($db, $params)
 {
-    $qt = tablename($params, 'quotes');
+    $qt = db_tablename('quotes', $params);
     $qid = dbintify($db, $params['qid'], -1);
     if ($qid < 0) {
         die ('Illegal quote id: '.$params['qid']);
@@ -255,27 +231,27 @@ function do_approve($db, $params)
 }
 function do_queue($db, $params)
 {
-    $qt = tablename($params, 'quotes');
-    return make_query($db, "SELECT * FROM $qt where queue=1");    
+    $qt = db_tablename('quotes', $params);
+    return make_query($db, "SELECT * FROM $qt where queue=1");
 }
 
 function main()
 {
     session_start();
-    global $CONFIG, $_REQUEST, $_SESSION, $authmask;
+    global $CONFIG, $_REQUEST, $_SESSION, $authmask, $db;
     $params = array_merge($CONFIG, $_REQUEST, $_SESSION);
 
-    $db = get_db($params);
     $params = array_merge($params, login($db, $params));
 
     $cmd = check_cmd_auth($params);
 
     $meth = sprintf("do_%s", $cmd);
     $ret = $meth($db, $params);
-    $db->disconnect();
-    
+
     emit($ret);
 
 }
 
 main();
+
+$db = null;

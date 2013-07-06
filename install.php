@@ -3,7 +3,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors','On');
 */
-require_once 'DB.php';
+include 'db.php';
 include 'util_funcs.php';
 
 $db = null;
@@ -14,39 +14,16 @@ function mk_datasource()
     global $db;
     if ($db != null) return $db;
     include 'settings.php';
-    $dsn = array(
-		 'phptype'  => $CONFIG['phptype'],
-		 'username' => $CONFIG['username'],
-		 'password' => $CONFIG['password'],
-		 'hostspec' => $CONFIG['hostspec'],
-		 'port'     => $CONFIG['port'],
-		 'socket'   => $CONFIG['socket'],
-		 'database' => $CONFIG['database'],
-		 );
-    $db =& DB::connect($dsn);
-    if (DB::isError($db)) {
-	die($db->getMessage().'<br />');
-    }
+    return get_db($CONFIG);
     return $db;
 }
 
-function db_query($sql) {
-    global $db;
-    $res =& $db->query($sql);
-    if (DB::isError($res)) {
-	print $res->getMessage().'<br />';
-	return 1;
-    } else {
-	print "OK<br />";
-	return 0;
-    }
-}
 
 function update_rash_quotes()
 {
     global $db;
 
-    $res =& $db->query("SELECT * from ".db_tablename('quotes').' LIMIT 1');
+    db_query("SELECT * from ".db_tablename('quotes').' LIMIT 1');
     if (!(DB::isError($res))) {
 	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
 	    if (isset($row['queue'])) { /* already up-to-date */
@@ -56,7 +33,7 @@ function update_rash_quotes()
 	}
     }
 
-    $res =& $db->query("SELECT * from ".db_tablename('queue'));
+    db_query("SELECT * from ".db_tablename('queue'));
     if (!(DB::isError($res))) {
 	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
 	    $pending[] = $row;
@@ -70,19 +47,15 @@ function update_rash_quotes()
 	print 'Updating queued quotes...';
     }
 
-    $res =& $db->query("DROP TABLE ".db_tablename('queue'));
+    db_query("DROP TABLE ".db_tablename('queue'));
 
-    $res =& $db->query("ALTER TABLE ".db_tablename('quotes'). " ADD queue int(1) not null");
-    $res =& $db->query("UPDATE ".db_tablename('quotes'). " SET queue=0");
+    db_query("ALTER TABLE ".db_tablename('quotes'). " ADD queue int(1) not null");
+    db_query("UPDATE ".db_tablename('quotes'). " SET queue=0");
 
     foreach ($pending as $row) {
-        $res =& $db->query("INSERT INTO ".db_tablename('quotes')." (quote, rating, flag, queue, date) VALUES(".$db->quote($row['quote']).", 0, 0, 1, '".mktime()."')");
+        db_query("INSERT INTO ".db_tablename('quotes')." (quote, rating, flag, queue, date) VALUES(".$db->quote($row['quote']).", 0, 0, 1, ".time().")");
     }
 
-    if (DB::isError($res)) {
-	print $res->getMessage().'<br />';
-	return 1;
-    }
     print 'OK<br />';
     return 0;
 }
@@ -93,15 +66,13 @@ function update_old_users()
 
     $users = array();
 
-    $res =& $db->query("SELECT * from ".db_tablename('users'));
-    if (!(DB::isError($res))) {
-	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
-	    if (isset($row['id'])) { /* already up-to-date */
-		print 'Users -table is up-to-date<br />';
-		return 0;
-	    }
-	    $users[] = $row;
+    db_query("SELECT * from ".db_tablename('users'));
+    while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
+	if (isset($row['id'])) { /* already up-to-date */
+	    print 'Users -table is up-to-date<br />';
+	    return 0;
 	}
+	$users[] = $row;
     }
 
     if (count($users) > 0) {
