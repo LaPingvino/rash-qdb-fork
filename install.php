@@ -37,6 +37,14 @@ if (file_exists($def_template)) {
 
 $TEMPLATE->printheader('Install Rash Quote Management System');
 
+function remove_quotes($data)
+{
+    foreach ($data as $k => $v) {
+	$v = str_replace("'", "", $v);
+	$data[$k] = $v;
+    }
+    return $data;
+}
 
 function mangle_sql($fname, $data)
 {
@@ -116,10 +124,12 @@ If (isset($_POST['submit'])) {
 
     print '<pre>'.$sql.'</pre>';
 
+    $CONFIG = remove_quotes($data);
     include 'db.php';
     $db = get_db($CONFIG);
     if ($db) {
 	db_query($sql);
+	$db = null;
     } else {
 	print '<p>Sorry, cannot access the database. You may need to do the commands manually.';
     }

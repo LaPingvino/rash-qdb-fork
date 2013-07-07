@@ -1,9 +1,9 @@
 
 -- Use the following commands to create the database and the users:
 
-create database $DATABASE$;
-create user '$USERNAME$'@'$HOSTSPEC$' identified by '$PASSWORD$';
-grant all privileges on $DATABASE$.* to '$USERNAME$'@'$HOSTSPEC$';
+--create database $DATABASE$;
+--create user '$USERNAME$'@'$HOSTSPEC$' identified by '$PASSWORD$';
+--grant all privileges on $DATABASE$.* to '$USERNAME$'@'$HOSTSPEC$';
 
 
 create table $QUOTETABLE$ (id int(11) NOT NULL auto_increment primary key,
