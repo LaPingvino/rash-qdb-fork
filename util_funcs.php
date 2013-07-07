@@ -21,7 +21,9 @@ function get_number_limit($param, $min, $max)
 function db_tablename($name)
 {
     include 'settings.php';
-    return $CONFIG['db_table_prefix'].'_'.$name;
+    if (isset($CONFIG['db_table_prefix']) && $CONFIG['db_table_prefix'] != '')
+	return $CONFIG['db_table_prefix'] . '_' . $name;
+    return $name;
 }
 
 function urlargs($ar1, $ar2 = null, $ar3 = null)
@@ -42,8 +44,9 @@ function autologin()
 
 	$sql = 'SELECT * FROM '.db_tablename('users').' WHERE id='.$db->quote((int)$userid).' AND user='.$db->quote($user);
 
-	$row = $db->query($sql)->fetch();
-	check_db_res($row, $sql);
+	$res = $db->query($sql);
+	check_db_res($res, $sql);
+	$row = $res->fetch();
 
 	if (!isset($row['password'])) return;
 	$passchk = md5($row['password'].$row['salt']);
