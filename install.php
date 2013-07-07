@@ -111,7 +111,7 @@ If (isset($_POST['submit'])) {
 					'ADMINSALT' => '\'\\$1\\$'.$salt.'\$\''
 					));
 
-    print '<pre>'.mangle_sql('install.txt', $sqldata).'</pre>';
+    print '<pre>'.mangle_sql('install.sql', $sqldata).'</pre>';
 
 }
 else {
