@@ -2,8 +2,8 @@
 -- Use the following commands to create the database and the users:
 
 create database $DATABASE$;
-create user $USERNAME$@$HOSTSPEC$ identified by $PASSWORD$;
-grant all privileges on $DATABASE$.* to $USERNAME$@$HOSTSPEC$;
+create user '$USERNAME$'@'$HOSTSPEC$' identified by '$PASSWORD$';
+grant all privileges on $DATABASE$.* to '$USERNAME$'@'$HOSTSPEC$';
 
 
 create table $QUOTETABLE$ (id int(11) NOT NULL auto_increment primary key,
@@ -32,4 +32,4 @@ create table $NEWSTABLE$ (id int(11) NOT NULL auto_increment primary key,
 
 
 insert into $USERSTABLE$ (user, password, level, salt) values (
-       	    		 $ADMINUSER$, $ADMINPASS$, 1, $ADMINSALT$);
+       	    		 '$ADMINUSER$', '$ADMINPASS$', 1, '$ADMINSALT$');

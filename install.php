@@ -43,6 +43,7 @@ function mangle_sql($fname, $data)
     $sql = file_get_contents($fname);
     foreach ($data as $k => $v) {
 	$s = '/\$'.strtoupper($k).'\$/';
+	$v = str_replace("'", "", $v);
 	$sql = preg_replace($s, $v, $sql);
     }
     return $sql;
@@ -111,10 +112,18 @@ If (isset($_POST['submit'])) {
 					'ADMINSALT' => '\'\\$1\\$'.$salt.'\$\''
 					));
 
-    print '<pre>'.mangle_sql('install.sql', $sqldata).'</pre>';
+    $sql = mangle_sql('install.sql', $sqldata);
 
-}
-else {
+    print '<pre>'.$sql.'</pre>';
+
+    include 'db.php';
+    $db = get_db($CONFIG);
+    if ($db) {
+	db_query($sql);
+    } else {
+	print '<p>Sorry, cannot access the database. You may need to do the commands manually.';
+    }
+} else {
     if(!file_exists('settings.php')){
 
 	if (!write_settings('settings.php', null)) {
