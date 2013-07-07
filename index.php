@@ -121,7 +121,7 @@ function handle_captcha($type, $func, &$param=null)
 function rash_rss()
 {
     global $CONFIG, $TEMPLATE;
-    $res = db_query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 ORDER BY id DESC LIMIT ?", $CONFIG['rss_entries']);
+    $res = db_query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 ORDER BY id DESC LIMIT " . $CONFIG['rss_entries']);
     $items = '';
     while($row=$res->fetch()) {
 	$title = $CONFIG['rss_url']."/?".$row['id'];
