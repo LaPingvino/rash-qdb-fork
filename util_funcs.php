@@ -20,7 +20,6 @@ function get_number_limit($param, $min, $max)
 
 function db_tablename($name)
 {
-    include 'settings.php';
     if (isset($CONFIG['db_table_prefix']) && $CONFIG['db_table_prefix'] != '')
 	return $CONFIG['db_table_prefix'] . '_' . $name;
     return $name;
@@ -28,10 +27,10 @@ function db_tablename($name)
 
 function urlargs($ar1, $ar2 = null, $ar3 = null)
 {
-    include 'settings.php';
+    $sep = isset($CONFIG['GET_SEPARATOR_HTML']) ? $CONFIG['GET_SEPARATOR_HTML'] : htmlspecialchars(ini_get('arg_separator.output'), ENT_QUOTES);
     if ($ar2 === null) return $ar1;
-    if ($ar3 === null) return implode($CONFIG['GET_SEPARATOR_HTML'], array($ar1, $ar2));
-    return implode($CONFIG['GET_SEPARATOR_HTML'], array($ar1, $ar2, $ar3));
+    if ($ar3 === null) return implode($sep, array($ar1, $ar2));
+    return implode($sep, array($ar1, $ar2, $ar3));
 }
 
 function autologin()

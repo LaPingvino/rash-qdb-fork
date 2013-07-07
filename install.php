@@ -3,169 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors','On');
 */
-include 'db.php';
 include 'util_funcs.php';
 
-$db = null;
 $hidelink = 0;
 
-function mk_datasource()
-{
-    global $db;
-    if ($db != null) return $db;
-    include 'settings.php';
-    return get_db($CONFIG);
-    return $db;
-}
-
-
-function update_rash_quotes()
-{
-    global $db;
-
-    db_query("SELECT * from ".db_tablename('quotes').' LIMIT 1');
-    if (!(DB::isError($res))) {
-	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
-	    if (isset($row['queue'])) { /* already up-to-date */
-		print 'Quotes -table is up-to-date<br />';
-		return 0;
-	    }
-	}
-    }
-
-    db_query("SELECT * from ".db_tablename('queue'));
-    if (!(DB::isError($res))) {
-	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
-	    $pending[] = $row;
-	}
-    } else {
-	print 'Queue -table is already dropped.<br>';
-	return 0;
-    }
-
-    if (count($pending) > 0) {
-	print 'Updating queued quotes...';
-    }
-
-    db_query("DROP TABLE ".db_tablename('queue'));
-
-    db_query("ALTER TABLE ".db_tablename('quotes'). " ADD queue int(1) not null");
-    db_query("UPDATE ".db_tablename('quotes'). " SET queue=0");
-
-    foreach ($pending as $row) {
-        db_query("INSERT INTO ".db_tablename('quotes')." (quote, rating, flag, queue, date) VALUES(".$db->quote($row['quote']).", 0, 0, 1, ".time().")");
-    }
-
-    print 'OK<br />';
-    return 0;
-}
-
-function update_old_users()
-{
-    global $db;
-
-    $users = array();
-
-    db_query("SELECT * from ".db_tablename('users'));
-    while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
-	if (isset($row['id'])) { /* already up-to-date */
-	    print 'Users -table is up-to-date<br />';
-	    return 0;
-	}
-	$users[] = $row;
-    }
-
-    if (count($users) > 0) {
-	print 'Updating old RASH-style users table...';
-    } else {
-	print 'Creating users table...';
-    }
-
-    $res =& $db->query("DROP TABLE ".db_tablename('users'));
-
-    $res =& $db->query("CREATE TABLE ".db_tablename('users'). " (id int(11) NOT NULL auto_increment primary key,
-							user varchar(20) NOT NULL,
-							`password` varchar(255) NOT NULL,
-							level int(1) NOT NULL,
-							salt text)");
-
-    foreach ($users as $row) {
-	$res =& $db->query("INSERT INTO ".db_tablename('users')." (user, password, level, salt) VALUES (".
-			   $db->quote($row['user']).",".
-			   $db->quote($row['password']).",".
-			   $db->quote($row['level']).",".
-			   $db->quote($row['salt']).")");
-    }
-
-    if (DB::isError($res)) {
-	print $res->getMessage().'<br />';
-	return 1;
-    }
-    print 'OK<br />';
-    return 0;
-}
-
-function update_old_tracking()
-{
-    global $db;
-
-    $tracking = array();
-
-    $res =& $db->query("SELECT * from ".db_tablename('tracking'));
-    if (!(DB::isError($res))) {
-	while ($row = $res->fetchRow(DB_FETCHMODE_ASSOC)) {
-	    if (isset($row['user_ip'])) { /* already up-to-date */
-		print 'Tracking -table is up-to-date<br />';
-		return 0;
-	    }
-	    $tracking[] = $row;
-	}
-    }
-
-    if (count($tracking) > 0) {
-	print 'Updating old RASH-style '.db_tablename('tracking').' table...';
-    } else {
-	print 'Creating '.db_tablename('tracking').' table...';
-    }
-
-    $res =& $db->query("DROP TABLE ".db_tablename('tracking'));
-
-    $res =& $db->query("CREATE TABLE ".db_tablename('tracking'). " (id int NOT NULL auto_increment primary key,
-                              user_ip varchar(15) NOT NULL,
-                              user_id int,
-                              quote_id int NOT NULL,
-                              vote int NOT NULL)");
-
-    foreach ($tracking as $row) {
-
-	$qids = explode(",", $row['quote_id']);
-	$votes = explode(",", $row['vote']);
-
-	for ($idx = 0; $idx < count($qids); $idx++) {
-	    if ($votes[$idx] == '1') {
-		$query ="INSERT INTO ".db_tablename('tracking')." (user_ip, user_id, quote_id, vote) VALUES (".
-		    $db->quote($row['ip']).",".
-				   "null,".
-				   $qids[$idx].",".
-				   "2)"; /* 2 = assumed + vote, old table doesn't keep track! */
-		$res =& $db->query($query);
-		if (DB::isError($res)) {
-		    print $res->getMessage().'<br />'.$query.'<br>';
-		    return 1;
-		}
-
-	    }
-	}
-    }
-
-    if (DB::isError($res)) {
-	print $res->getMessage().'<br />';
-	return 1;
-    }
-    print 'OK<br />';
-    return 0;
-
-}
 
 $languages = array('US-english','Finnish');
 
@@ -187,7 +28,6 @@ $def_template = './templates/bash/bash.php';
 require 'basetemplate.php';
 
 if (file_exists($def_template)) {
-    /*require('language/US-english.lng');*/
     require $def_template;
 } else {
     class TempTemplate extends BaseTemplate  {
@@ -196,6 +36,17 @@ if (file_exists($def_template)) {
 }
 
 $TEMPLATE->printheader('Install Rash Quote Management System');
+
+
+function mangle_sql($fname, $data)
+{
+    $sql = file_get_contents($fname);
+    foreach ($data as $k => $v) {
+	$s = '/\$'.strtoupper($k).'\$/';
+	$sql = preg_replace($s, $v, $sql);
+    }
+    return $sql;
+}
 
 If (isset($_POST['submit'])) {
     if (file_exists('settings.php')){
@@ -248,49 +99,20 @@ If (isset($_POST['submit'])) {
 	die("settings.php does not exist.");
     }
 
-    print '<h2>Creating database tables...</h2>';
+    $salt = str_rand();
 
-    function mk_db_table($tablename,$fields)
-    {
-	print 'Create table '.$tablename.': ';
-	return db_query('CREATE TABLE '.$tablename.' ('.$fields.');');
-    }
+    $sqldata = array_merge($data, array(
+					'QUOTETABLE' => db_tablename('quotes'),
+					'USERSTABLE' => db_tablename('users'),
+					'TRACKINGTABLE' => db_tablename('tracking'),
+					'NEWSTABLE' => db_tablename('news'),
+					'ADMINUSER' => "'".$_POST['adminuser']."'",
+					'ADMINPASS' => "'\\$1".crypt($_POST['adminpass'], "$1$".substr($salt, 0, 8)."$")."'",
+					'ADMINSALT' => '\'\\$1\\$'.$salt.'\$\''
+					));
 
-    function mk_user($username, $password)
-    {
-	print 'Creating user '.$username.': ';
-	$salt = str_rand();
-	$level = 1;
-	$str = "INSERT INTO ".db_tablename('users')." (user, password, level, salt) VALUES('$username', '".crypt($password, "\$1\$".substr($salt, 0, 8)."\$")."', '$level', '\$1\$".$salt."\$');";
-	return db_query($str);
-    }
+    print '<pre>'.mangle_sql('install.txt', $sqldata).'</pre>';
 
-    $db = mk_datasource();
-
-    $error = mk_db_table(db_tablename('quotes'), "id int(11) NOT NULL auto_increment primary key,
-							quote text NOT NULL,
-							rating int(7) NOT NULL,
-							flag int(1) NOT NULL,
-                                                        queue int(1) NOT NULL,
-							date int(10) NOT NULL");
-
-    $error |= update_rash_quotes();
-
-    $error |= update_old_tracking();
-    $error |= update_old_users();
-
-    $error |= mk_db_table(db_tablename('news'), "id int(11) NOT NULL auto_increment primary key,
-							news text NOT NULL,
-							date int(10) NOT NULL");
-
-    if (trim($_POST['adminuser']) != '')
-	$error |= mk_user($_POST['adminuser'], $_POST['adminpass']);
-
-    if ($error) {
-	print '<p>There were some errors...';
-    } else {
-	print '<p>Everything should now be OK.';
-    }
 }
 else {
     if(!file_exists('settings.php')){
