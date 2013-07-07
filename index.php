@@ -337,7 +337,7 @@ function quote_generation($query, $origin, $page = 1, $quote_limit = 50, $page_l
     $up_lim = ($quote_limit * $page);
     $low_lim = $up_lim - $quote_limit;
     if($page != -1){
-	$query .= "LIMIT $low_lim,$quote_limit";
+	$query .= " LIMIT $low_lim,$quote_limit";
     }
 
     $res = $db->query($query);
@@ -913,14 +913,14 @@ switch($page[0])
 		flag_queue($page[1]);
 	    break;
 	case 'latest':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 ".$voteable." ORDER BY q.id DESC LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 ".$voteable." ORDER BY q.id DESC";
 	    if (isset($_SESSION['lastvisit'])) {
 		$nlatest = $db->query("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable)->fetch();
 		if (($nlatest >= $CONFIG['min_latest']) && ($nlatest <= $CONFIG['quote_list_limit'])) {
 		    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable." ORDER BY q.id DESC";
 		}
 	    }
-	    quote_generation($query, lang('latest_title'), -1);
+	    quote_generation($query, lang('latest_title'), $page[1], $CONFIG['quote_limit'], $CONFIG['page_limit']);
 	    break;
 	case 'logout':
 	    set_user_logout();
