@@ -340,8 +340,8 @@ function show_spam()
 function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 {
     global $CONFIG, $db;
-    $numrows = $db->query("SELECT COUNT(id) AS cnt FROM ".db_tablename('quotes'))->fetch()['cnt'];
-    $testrows = $numrows;
+    $numrows = $db->query("SELECT COUNT(id) AS cnt FROM ".db_tablename('quotes'))->fetch();
+    $testrows = $numrows['cnt'];
 
     $pagenum = 0;
 
