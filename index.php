@@ -225,6 +225,87 @@ function home_generation()
     print $TEMPLATE->main_page($news);
 }
 
+function reorder_quotes()
+{
+    global $db, $TEMPLATE, $CONFIG;
+
+    $sql = 'SELECT * FROM '.db_tablename('quotes').' ORDER BY id asc';
+    $stmt = $db->query($sql);
+    check_db_res($stmt, $sql);
+
+    $quotedata = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $sql = 'SELECT * FROM '.db_tablename('tracking').' WHERE quote_id = ?';
+    $sth = $db->prepare($sql);
+    for ($i = 0; $i < count($quotedata); $i++) {
+	$q = $quotedata[$i];
+	$sth->execute(array($q['id']));
+	$quotedata[$i]['trackingdata'] = $sth->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    $sql = 'DELETE FROM '.db_tablename('quotes');
+    db_query($sql);
+    $sql = 'DELETE FROM '.db_tablename('tracking');
+    db_query($sql);
+    $sql = 'ALTER TABLE '.db_tablename('quotes').' AUTO_INCREMENT=0';
+    db_query($sql);
+    $sql = 'ALTER TABLE '.db_tablename('tracking').' AUTO_INCREMENT=0';
+    db_query($sql);
+
+    $sql = 'INSERT INTO '.db_tablename('quotes').' (quote, rating, flag, date, submitip) VALUES (?, ?, ?, ?, ?)';
+    $stha = $db->prepare($sql);
+
+    $sql = 'INSERT INTO '.db_tablename('tracking').' (user_ip, quote_id, vote) VALUES (?, ?, ?)';
+    $sthb = $db->prepare($sql);
+
+    print 'Reordering the quotes...<br>';
+
+    for ($i = 0; $i < count($quotedata); $i++) {
+	$q = $quotedata[$i];
+	unset($q['id']);
+	$tracking = $q['trackingdata'];
+	unset($q['trackingdata']);
+	$stha->execute(array($q['quote'], $q['rating'], $q['flag'], $q['date'], $q['submitip']));
+	$qvote = 0;
+	foreach ($tracking as $t) {
+	    $sthb->execute(array($t['user_ip'], ($i+1), $t['vote']));
+	    $qvote += ((int)$t['vote']);
+	}
+	if ($qvote != $q['rating']) print "Quote $i has wrong rating (is ".$q['rating'].", should be $qvote<br>";
+    }
+    print '<br>DONE';
+}
+
+function show_quote_voters($quoteid)
+{
+    global $db, $TEMPLATE, $CONFIG;
+
+    $sql = 'SELECT * FROM '.db_tablename('tracking').' WHERE quote_id = ?';
+    $sth = $db->prepare($sql);
+    $sth->execute(array($quoteid));
+    $trackingdata = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+    if (count($trackingdata)) {
+	$k = array_keys($trackingdata[0]);
+	print '<table>';
+	print '<tr>';
+	print '<th>'. join('</th><th>', $k).'</th>';
+	print '</tr>';
+
+	foreach ($trackingdata as $t) {
+	    print '<tr>';
+	    foreach ($k as $kk) {
+		print '<td>'. $t[$kk].'</td>';
+	    }
+	    print '</tr>';
+	}
+
+	print '</table>';
+    }
+
+}
+
+
 /************************************************************************
 ************************************************************************/
 
@@ -987,6 +1068,14 @@ switch($page[0])
 	    if (isset($CONFIG['login_required']) && ($CONFIG['login_required'] == 1) && !isset($_SESSION['logged_in']))
 		break;
 	    vote($page[1], $page[2], ($page[0] === 'ajaxvote'));
+	    break;
+	case 'voters':
+	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN))
+		show_quote_voters($page[1]);
+	    break;
+	case 'reorder':
+	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_SUPERUSER))
+		reorder_quotes();
 	    break;
 	case 'news':
 	    news_page();
