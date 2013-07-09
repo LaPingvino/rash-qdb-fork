@@ -276,61 +276,39 @@ function reorder_quotes()
     print '<br>DONE';
 }
 
-function show_quote_voters($quoteid)
+
+function get_table_data($sql, $params=NULL)
 {
     global $db, $TEMPLATE, $CONFIG;
-
-    $sql = 'SELECT * FROM '.db_tablename('tracking').' WHERE quote_id = ?';
     $sth = $db->prepare($sql);
-    $sth->execute(array($quoteid));
-    $trackingdata = $sth->fetchAll(PDO::FETCH_ASSOC);
-
-    if (count($trackingdata)) {
-	$k = array_keys($trackingdata[0]);
-	print '<table>';
-	print '<tr>';
-	print '<th>'. join('</th><th>', $k).'</th>';
-	print '</tr>';
-
-	foreach ($trackingdata as $t) {
-	    print '<tr>';
+    $sth->execute($params);
+    $dat = $sth->fetchAll(PDO::FETCH_ASSOC);
+    if (count($dat)) {
+	$s = '';
+	$k = array_keys($dat[0]);
+	$s .= '<table>';
+	$s .= '<tr><th>'. join('</th><th>', $k).'</th></tr>';
+	foreach ($dat as $t) {
+	    $s .= '<tr>';
 	    foreach ($k as $kk) {
-		print '<td>'. $t[$kk].'</td>';
+		$s .= '<td>'. $t[$kk].'</td>';
 	    }
-	    print '</tr>';
+	    $s .= '</tr>';
 	}
-
-	print '</table>';
+	$s .= '</table>';
+	return $s;
     }
+    return '';
+}
 
+function show_quote_voters($quoteid)
+{
+    print get_table_data('SELECT * FROM '.db_tablename('tracking').' WHERE quote_id = ?', array($quoteid));
 }
 
 function show_spam()
 {
-    global $db, $TEMPLATE, $CONFIG;
-
-    $sql = 'SELECT * FROM '.db_tablename('spamlog');
-    $sth = $db->prepare($sql);
-    $sth->execute();
-    $trackingdata = $sth->fetchAll(PDO::FETCH_ASSOC);
-
-    if (count($trackingdata)) {
-	$k = array_keys($trackingdata[0]);
-	print '<table>';
-	print '<tr>';
-	print '<th>'. join('</th><th>', $k).'</th>';
-	print '</tr>';
-
-	foreach ($trackingdata as $t) {
-	    print '<tr>';
-	    foreach ($k as $kk) {
-		print '<td>'. $t[$kk].'</td>';
-	    }
-	    print '</tr>';
-	}
-
-	print '</table>';
-    }
+    print get_table_data('SELECT * FROM '.db_tablename('spamlog'));
 }
 
 
