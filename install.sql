@@ -6,30 +6,42 @@
 --grant all privileges on $DATABASE$.* to '$USERNAME$'@'$HOSTSPEC$';
 
 
-create table $QUOTETABLE$ (id int(11) NOT NULL auto_increment primary key,
-							quote text NOT NULL,
-							rating int(7) NOT NULL,
-							flag int(1) NOT NULL,
-                                                        queue int(1) NOT NULL,
-							date int(10) NOT NULL);
+create table $QUOTETABLE$ (id int NOT NULL auto_increment primary key,
+			   quote text NOT NULL,
+			   rating int NOT NULL DEFAULT 0,
+			   flag int(1) NOT NULL DEFAULT 0,
+			   submitdate datetime NOT NULL DEFAULT NOW(),
+			   acceptdate datetime NOT NULL DEFAULT NOW(),
+			   submitip varchar(64));
 
+create table $QUEUETABLE$ (id int NOT NULL auto_increment primary key,
+			  quote text NOT NULL,
+			  rating int NOT NULL DEFAULT 0,
+			  flag int(1) NOT NULL DEFAULT 0,
+			  submitdate datetime NOT NULL DEFAULT NOW(),
+			  submitip varchar(64));
 
-create table $USERSTABLE$ (id int(11) NOT NULL auto_increment primary key,
-							user varchar(20) NOT NULL,
-							`password` varchar(255) NOT NULL,
-							level int(1) NOT NULL,
-							salt text);
+create table $USERSTABLE$ (id int NOT NULL auto_increment primary key,
+			   user varchar(20) NOT NULL,
+			   `password` varchar(255) NOT NULL,
+			   level int(1) NOT NULL,
+			   salt text);
 
 create table $TRACKINGTABLE$ (id int NOT NULL auto_increment primary key,
-                              user_ip varchar(15) NOT NULL,
+                              user_ip varchar(64) NOT NULL,
                               user_id int,
                               quote_id int NOT NULL,
-                              vote int NOT NULL);
+                              vote int NOT NULL,
+			      date datetime);
 
-create table $NEWSTABLE$ (id int(11) NOT NULL auto_increment primary key,
-							news text NOT NULL,
-							date int(10) NOT NULL);
+create table $NEWSTABLE$ (id int NOT NULL auto_increment primary key,
+			  news text NOT NULL,
+			  date datetime NOT NULL DEFAULT NOW());
 
+create table $SPAMTABLE$ (id int NOT NULL auto_increment primary key,
+			  submitip varchar(64),
+			  time datetime NOT NULL DEFAULT NOW(),
+			  quote text);
 
 insert into $USERSTABLE$ (user, password, level, salt) values (
        	    		 '$ADMINUSER$', '$ADMINPASS$', 1, '$ADMINSALT$');

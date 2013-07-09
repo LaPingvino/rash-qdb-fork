@@ -207,15 +207,15 @@ abstract class BaseTemplate {
 	return '<a href="?'.urlargs('edit','edit',$quoteid).'" class="quote_edit" title="'.lang('editquote').'">[E]</a>';
     }
 
-    function edit_quote_page($quoteid, $quotetxt, $edited_quote_html='')
+    function edit_quote_page($action, $quoteid, $quotetxt, $edited_quote_html='')
     {
-	$str = '<div id="editquote_all">';
+	$str = '<div id="editquote_all" class="act_'.$action.'">';
 
 	$str .= '<h1 id="editquote_title">'.lang('editquote_title').'</h1>';
 
 	$str .= $edited_quote_html;
 
-	$str .= '<form action="?'.urlargs('edit','submit', $quoteid).'" method="post">
+	$str .= '<form action="?'.urlargs($action,'submit', $quoteid).'" method="post">
         <textarea cols="80" rows="5" name="rash_quote" id="edit_quote">'.$quotetxt.'</textarea><br />
         <input type="submit" value="'.lang('edit_quote_btn').'" id="edit_submit" />
         <input type="reset" value="'.lang('edit_reset_btn').'" id="edit_reset" />

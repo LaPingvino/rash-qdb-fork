@@ -127,7 +127,7 @@ function add_quote_page($quotetxt='', $added_quote_html='', $wasadded=null)
 
 
 
-function edit_quote_page($quoteid, $quotetxt, $edited_quote_html='')
+function edit_quote_page($action, $quoteid, $quotetxt, $edited_quote_html='')
 {
     $str = '<div id="editquote_all">';
 
@@ -137,7 +137,7 @@ function edit_quote_page($quoteid, $quotetxt, $edited_quote_html='')
 
     $str .= $edited_quote_html;
 
-    $str .= '<form action="?'.urlargs('edit','submit', $quoteid).'" method="post">
+    $str .= '<form action="?'.urlargs($action,'submit', $quoteid).'" method="post">
      <textarea cols="80" rows="5" name="rash_quote" id="edit_quote" '.$this->resizehooks.'>'.$quotetxt.'</textarea><br />
      <input type="submit" value="'.lang('edit_quote_btn').'" id="edit_submit" />
      <input type="reset" value="'.lang('edit_reset_btn').'" id="edit_reset" />

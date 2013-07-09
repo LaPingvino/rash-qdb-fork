@@ -97,8 +97,8 @@ $TEMPLATE->set_menu(1, $adminmenu);
 
 function get_db_stats()
 {
-    $ret['pending_quotes'] = db_query_singlevalue('select count(id) from '.db_tablename('quotes').' where queue=1');
-    $ret['approved_quotes'] = db_query_singlevalue('select count(id) from '.db_tablename('quotes').' where queue=0');
+    $ret['pending_quotes'] = db_query_singlevalue('SELECT count(id) FROM '.db_tablename('queue'));
+    $ret['approved_quotes'] = db_query_singlevalue('SELECT count(id) FROM '.db_tablename('quotes'));
     return $ret;
 }
 
@@ -121,7 +121,7 @@ function handle_captcha($type, $func, &$param=null)
 function rash_rss()
 {
     global $CONFIG, $TEMPLATE;
-    $res = db_query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 ORDER BY id DESC LIMIT " . $CONFIG['rss_entries']);
+    $res = db_query("SELECT * FROM ".db_tablename('quotes')." ORDER BY id DESC LIMIT " . $CONFIG['rss_entries']);
     $items = '';
     while($row=$res->fetch()) {
 	$title = $CONFIG['rss_url']."/?".$row['id'];
@@ -187,7 +187,8 @@ function vote($quote_num, $method, $ajaxy=FALSE)
 	$db->query("UPDATE ".db_tablename('quotes')." SET rating = rating-1 WHERE id = ".$db->quote((int)$quote_num));
     }
     if ($vote != 0) {
-	$res = $db->query("INSERT INTO ".db_tablename('tracking')." (user_ip, quote_id, vote) VALUES(".$db->quote($_SESSION['voteip']).", ".$db->quote($quote_num).", ".$vote.")");
+	$t = time();
+	$res = $db->query("INSERT INTO ".db_tablename('tracking')." (user_ip, quote_id, vote, date) VALUES(".$db->quote($_SESSION['voteip']).", ".$db->quote($quote_num).", ".$vote.", ".$db->quote($t).")");
 	if ($ajaxy) return 'VOTE_OK';
 	$TEMPLATE->add_message(lang('tracking_check_1'));
     }
@@ -230,7 +231,7 @@ function home_generation()
 function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 {
     global $CONFIG, $db;
-    $numrows = $db->query("SELECT COUNT(id) as cnt FROM ".db_tablename('quotes').' WHERE queue=0')->fetch()['cnt'];
+    $numrows = $db->query("SELECT COUNT(id) AS cnt FROM ".db_tablename('quotes'))->fetch()['cnt'];
     $testrows = $numrows;
 
     $pagenum = 0;
@@ -307,12 +308,7 @@ function user_can_vote_quote($quoteid)
 {
     global $CONFIG, $db;
 
-    $row = $db->query('select vote from '.db_tablename('tracking').' where user_ip='.$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quoteid))->fetch();
-    /*
-    if (DB::isError($res)) {
-	die('user_can_vote_quote():'.$res->getMessage());
-    }
-    */
+    $row = $db->query('SELECT vote FROM '.db_tablename('tracking').' WHERE user_ip='.$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quoteid))->fetch();
 
     if (isset($CONFIG['login_required']) && ($CONFIG['login_required'] == 1) && !isset($_SESSION['logged_in']))
 	return 2;
@@ -369,7 +365,7 @@ function edit_news($method, $id)
     $news = '';
 
     if ($method == 'edit') {
-	$row = $db->query("SELECT * FROM ".db_tablename('news')." where id=".$db->quote((int)$id))->fetch();
+	$row = $db->query("SELECT * FROM ".db_tablename('news')." WHERE id=".$db->quote((int)$id))->fetch();
 	$newstxt = preg_replace('/\<br \/\>/', '', $row['news']);
 	$news = $TEMPLATE->edit_news_form($row['id'], $newstxt);
     } else if ($method == 'update') {
@@ -380,7 +376,7 @@ function edit_news($method, $id)
 	    $news .= $TEMPLATE->edit_news_form($id, $newstxt);
 	} else if (isset($_POST['delete'])) {
 	    if (isset($_POST['verify_delete'])) {
-		$db->query("DELETE FROM ".db_tablename('news')." where id=".$db->quote((int)$id));
+		$db->query("DELETE FROM ".db_tablename('news')." WHERE id=".$db->quote((int)$id));
 		$TEMPLATE->add_message(lang('news_item_deleted'));
 	    } else {
 		$newstxt = trim($_POST['news']);
@@ -446,7 +442,7 @@ function username_exists($name)
 {
     global $db;
     $name = strtolower($name);
-    $sql = 'select count(1) as cnt from '.db_tablename('users').' where LOWER(user)='.$db->quote($name);
+    $sql = 'SELECT COUNT(1) AS cnt FROM '.db_tablename('users').' WHERE LOWER(user)='.$db->quote($name);
     $res = $db->query($sql);
     check_db_res($res, $sql);
     $ret = $res->fetch();
@@ -638,7 +634,7 @@ function quote_queue($method)
     global $CONFIG, $TEMPLATE, $db;
     if ($method == 'judgement') {
 	$x = 0;
-	$sth = $db->query("SELECT * FROM ".db_tablename('quotes').' where queue=1');
+	$sth = $db->query("SELECT * FROM ".db_tablename('queue'));
 	while ($row = $sth->fetch()) {
 	    if (isset($_POST['q'.$row['id']])) {
 		$judgement_array[$x] = $_POST['q'.$row['id']];
@@ -648,17 +644,20 @@ function quote_queue($method)
 	$x = 0;
 	while (isset($judgement_array[$x])) {
 	    if(substr($judgement_array[$x], 0, 1) == 'y'){
-		$db->query("UPDATE ".db_tablename('quotes')." SET queue=0 WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
+		$db->query("INSERT INTO ".db_tablename('quotes')." (SELECT quote,rating,flag,submitdate,submitip FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)).")");
+		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
 		$TEMPLATE->add_message(sprintf(lang('quote_accepted'), substr($judgement_array[$x], 1)));
 	    } else {
-		$db->query("DELETE FROM ".db_tablename('quotes')." WHERE queue=1 AND id =".$db->quote((int)substr($judgement_array[$x], 1)));
+		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
 		$TEMPLATE->add_message(sprintf(lang('quote_deleted'), substr($judgement_array[$x], 1)));
 	    }
 	    $x++;
 	}
     }
 
-    $res = $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE queue=1 order by id asc");
+    $sql = 'SELECT * FROM '.db_tablename('queue').' ORDER BY id ASC';
+    $res = $db->query($sql);
+    check_db_res($res, $sql);
 
     $innerhtml = '';
     $x = 0;
@@ -754,7 +753,7 @@ function search($method, $searchparam=null)
 
 	$searchx = '%'.$search.'%';
 
-	$query = "SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 and (quote LIKE ".$db->quote($searchx).$exactmatch.") ORDER BY ".$sortby." $how LIMIT ".$limit;
+	$query = "SELECT * FROM ".db_tablename('quotes')." WHERE (quote LIKE ".$db->quote($searchx).$exactmatch.") ORDER BY ".$sortby." $how LIMIT ".$limit;
 
 	quote_generation($query, lang('search_results_title'), -1);
     } else $search = '';
@@ -762,11 +761,14 @@ function search($method, $searchparam=null)
     print $TEMPLATE->search_quotes_page(($method == 'fetch'), htmlspecialchars($search));
 }
 
-function edit_quote($method, $quoteid)
+function edit_quote($action, $method, $quoteid)
 {
     global $CONFIG, $TEMPLATE, $db;
 
     if (!isset($_SESSION['logged_in']) || ($_SESSION['level'] > USER_ADMIN)) return;
+
+    if ($action == 'editqueue') $table = 'queue';
+    else $table = 'quotes';
 
     $innerhtml = '';
 
@@ -776,13 +778,13 @@ function edit_quote($method, $quoteid)
 
 	$innerhtml = $TEMPLATE->edit_quote_outputmsg(mangle_quote_text($quotxt));
 
-	$db->query("UPDATE ".db_tablename('quotes')." SET quote=".$db->quote($quotxt)." WHERE id=".$db->quote($quoteid));
+	$db->query("UPDATE ".db_tablename($table)." SET quote=".$db->quote($quotxt)." WHERE id=".$db->quote($quoteid));
     } else {
-	$tmp = $db->query("SELECT quote FROM ".db_tablename('quotes')." WHERE id=".$db->quote($quoteid))->fetch();
+	$tmp = $db->query("SELECT quote FROM ".db_tablename($table)." WHERE id=".$db->quote($quoteid))->fetch();
 	$quotxt = $tmp['quote'];
     }
 
-    print $TEMPLATE->edit_quote_page($quoteid, $quotxt, $innerhtml);
+    print $TEMPLATE->edit_quote_page($action, $quoteid, $quotxt, $innerhtml);
 }
 
 
@@ -792,7 +794,12 @@ function add_quote_do_inner()
     $flag = (isset($CONFIG['auto_flagged_quotes']) && ($CONFIG['auto_flagged_quotes'] == 1)) ? 2 : 0;
     $quotxt = htmlspecialchars(trim($_POST["rash_quote"]));
     $innerhtml = $TEMPLATE->add_quote_outputmsg(mangle_quote_text($quotxt));
-    $db->query("INSERT INTO ".db_tablename('quotes')." (quote, rating, flag, queue, date) VALUES(".$db->quote($quotxt).", 0, ".$flag.", ".$CONFIG['moderated_quotes'].", ".time().")");
+    if ($CONFIG['moderated_quotes']) {
+	$table = 'queue';
+    } else {
+	$table = 'quotes';
+    }
+    $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip) VALUES(".$db->quote($quotxt).", ".$db->quote($_SESSION['voteip']).")");
     return $innerhtml;
 }
 
@@ -965,8 +972,9 @@ switch($page[0])
 	    quote_generation($query, lang('top_title'), -1);
 	    break;
 	case 'edit':
+	case 'editqueue':
 	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN))
-		edit_quote($page[1], $page[2]);
+		edit_quote($page[0], $page[1], $page[2]);
 	    break;
 	case 'users':
 	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_SUPERUSER))

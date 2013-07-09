@@ -112,9 +112,11 @@ If (isset($_POST['submit'])) {
 
     $sqldata = array_merge($data, array(
 					'QUOTETABLE' => db_tablename('quotes'),
+					'QUEUETABLE' => db_tablename('queue'),
 					'USERSTABLE' => db_tablename('users'),
 					'TRACKINGTABLE' => db_tablename('tracking'),
 					'NEWSTABLE' => db_tablename('news'),
+					'SPAMTABLE' => db_tablename('spam'),
 					'ADMINUSER' => "'".$_POST['adminuser']."'",
 					'ADMINPASS' => "'\\$1".crypt($_POST['adminpass'], "$1$".substr($salt, 0, 8)."$")."'",
 					'ADMINSALT' => '\'\\$1\\$'.$salt.'\$\''
