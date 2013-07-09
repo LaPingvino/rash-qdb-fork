@@ -791,6 +791,7 @@ function flag_queue($method)
 		    $db->query("UPDATE ".db_tablename('quotes')." SET flag=2 WHERE flag=1");
 		    $TEMPLATE->add_message(lang('unflagged_all'));
 		} else if (isset($_POST['delete_all'])) {
+		    $db->query("DELETE FROM ".db_tablename('tracking')." WHERE quote_id IN (SELECT id FROM ".db_tablename('quotes')." WHERE flag=1)");
 		    $db->query("DELETE FROM ".db_tablename('quotes')." WHERE flag=1");
 		    $TEMPLATE->add_message(lang('deleted_all'));
 		}
@@ -813,6 +814,7 @@ function flag_queue($method)
 		}
 		if(substr($judgement_array[$x], 0, 1) == 'd'){
 		    $db->query("DELETE FROM ".db_tablename('quotes')." WHERE id=".$db->quote((int)substr($judgement_array[$x], 1)));
+		    $db->query("DELETE FROM ".db_tablename('tracking')." WHERE quote_id=".$db->quote((int)substr($judgement_array[$x], 1)));
 		    $TEMPLATE->add_message(sprintf(lang('quote_deleted'), substr($judgement_array[$x], 1)));
 		}
 		$x++;
