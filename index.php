@@ -907,6 +907,7 @@ function add_quote_do_inner()
     $quotxt = htmlspecialchars(trim($_POST["rash_quote"]));
     $innerhtml = $TEMPLATE->add_quote_outputmsg(mangle_quote_text($quotxt));
     $t = time();
+    $ip = $_SERVER['REMOTE_ADDR'];
     if ($spamre && preg_match('/'.$spamre.'/', $quotxt)) {
 	$table = 'spam';
     } elseif ($CONFIG['moderated_quotes']) {
@@ -914,7 +915,7 @@ function add_quote_do_inner()
     } else {
 	$table = 'quotes';
     }
-    $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip, date) VALUES(".$db->quote($quotxt).", ".$db->quote($_SESSION['voteip']).", ".$t.")");
+    $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip, date) VALUES(".$db->quote($quotxt).", ".$db->quote($ip).", ".$t.")");
     return $innerhtml;
 }
 
