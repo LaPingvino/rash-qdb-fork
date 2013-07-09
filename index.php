@@ -47,7 +47,7 @@ autologin();
 
 $mainmenu = array(array('url' => './', 'id' => 'site_nav_home', 'txt' => 'menu_home'),
 		  array('url' => '?latest', 'id' => 'site_nav_latest', 'txt' => 'menu_latest'),
-		  array('url' => '?browse', 'id' => 'site_nav_browse', 'txt' => 'menu_browse'),
+		  //array('url' => '?browse', 'id' => 'site_nav_browse', 'txt' => 'menu_browse'),
 		  array('url' => '?random', 'id' => 'site_nav_random', 'txt' => 'menu_random'),
 		  array('url' => '?random2', 'id' => 'site_nav_random2', 'txt' => 'menu_random2'),
 		  array('url' => '?bottom', 'id' => 'site_nav_bottom', 'txt' => 'menu_bottom'),
