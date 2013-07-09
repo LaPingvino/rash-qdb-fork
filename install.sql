@@ -10,15 +10,14 @@ create table $QUOTETABLE$ (id int NOT NULL auto_increment primary key,
 			   quote text NOT NULL,
 			   rating int NOT NULL DEFAULT 0,
 			   flag int(1) NOT NULL DEFAULT 0,
-			   submitdate datetime NOT NULL DEFAULT NOW(),
-			   acceptdate datetime NOT NULL DEFAULT NOW(),
+			   date int(10),
 			   submitip varchar(64));
 
 create table $QUEUETABLE$ (id int NOT NULL auto_increment primary key,
 			  quote text NOT NULL,
 			  rating int NOT NULL DEFAULT 0,
 			  flag int(1) NOT NULL DEFAULT 0,
-			  submitdate datetime NOT NULL DEFAULT NOW(),
+			  date int(10),
 			  submitip varchar(64));
 
 create table $USERSTABLE$ (id int NOT NULL auto_increment primary key,
@@ -32,15 +31,15 @@ create table $TRACKINGTABLE$ (id int NOT NULL auto_increment primary key,
                               user_id int,
                               quote_id int NOT NULL,
                               vote int NOT NULL,
-			      date datetime);
+			      date int(10));
 
 create table $NEWSTABLE$ (id int NOT NULL auto_increment primary key,
 			  news text NOT NULL,
-			  date datetime NOT NULL DEFAULT NOW());
+			  date int(10));
 
 create table $SPAMTABLE$ (id int NOT NULL auto_increment primary key,
 			  submitip varchar(64),
-			  time datetime NOT NULL DEFAULT NOW(),
+			  date int(10),
 			  quote text);
 
 insert into $USERSTABLE$ (user, password, level, salt) values (

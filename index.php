@@ -644,7 +644,9 @@ function quote_queue($method)
 	$x = 0;
 	while (isset($judgement_array[$x])) {
 	    if(substr($judgement_array[$x], 0, 1) == 'y'){
-		$db->query("INSERT INTO ".db_tablename('quotes')." (SELECT quote,rating,flag,submitdate,submitip FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)).")");
+		$fields = 'quote,rating,flag,date,submitip';
+		$sql = "INSERT INTO ".db_tablename('quotes')." ($fields) SELECT $fields FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1));
+		db_query($sql);
 		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
 		$TEMPLATE->add_message(sprintf(lang('quote_accepted'), substr($judgement_array[$x], 1)));
 	    } else {
@@ -899,11 +901,11 @@ switch($page[0])
 		}
 		break;
 	case 'bottom':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 and q.rating < 0 ".$voteable." ORDER BY q.rating ASC LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating < 0 ".$voteable." ORDER BY q.rating ASC LIMIT ".$limit;
 	    quote_generation($query, lang('bottom_title'), -1);
 	    break;
 	case 'browse':
-		$query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 ".$voteable." ORDER BY q.id ASC ";
+		$query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE TRUE ".$voteable." ORDER BY q.id ASC ";
 		quote_generation($query, lang('browse_title'), $page[1], $CONFIG['quote_limit'], $CONFIG['page_limit']);
 		break;
 	case 'change_pw':
@@ -920,11 +922,11 @@ switch($page[0])
 		flag_queue($page[1]);
 	    break;
 	case 'latest':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 ".$voteable." ORDER BY q.id DESC";
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE TRUE ".$voteable." ORDER BY q.id DESC";
 	    if (isset($_SESSION['lastvisit'])) {
-		$nlatest = $db->query("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable)->fetch();
+		$nlatest = $db->query("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE q.date>=".$db->quote($_SESSION['lastvisit']).$voteable)->fetch();
 		if (($nlatest >= $CONFIG['min_latest']) && ($nlatest <= $CONFIG['quote_list_limit'])) {
-		    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable." ORDER BY q.id DESC";
+		    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.date>=".$db->quote($_SESSION['lastvisit']).$voteable." ORDER BY q.id DESC";
 		}
 	    }
 	    quote_generation($query, lang('latest_title'), $page[1], $CONFIG['quote_limit'], $CONFIG['page_limit']);
@@ -938,27 +940,27 @@ switch($page[0])
 	    break;
 	case 'queue':
 	    if (isset($CONFIG['public_queue']) && ($CONFIG['public_queue'] == 1)) {
-		$query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=1 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+		$query = "SELECT q.* FROM ".db_tablename('queue')." q WHERE TRUE ".$voteable." ORDER BY rand() LIMIT ".$limit;
 		quote_generation($query, lang('quote_queue_title'), -1);
 	    }
 	    break;
 	case 'random':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE TRUE ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random_title'), -1);
 	    break;
 	case 'random2':
 	case 'randomplus':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 and q.rating>0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating>0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random2_title'), -1);
 	    break;
 	case 'random3':
 	case 'random0':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 and q.rating=0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating=0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random3_title'), -1);
 	    break;
 	case 'random4':
 	case 'randomminus':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 and q.rating<0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating<0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random4_title'), -1);
 	    break;
 	case 'rss':
@@ -968,7 +970,7 @@ switch($page[0])
 	    search($page[1], $pageparam);
 	    break;
 	case 'top':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.queue=0 and q.rating > 0 ".$voteable." ORDER BY q.rating DESC LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating > 0 ".$voteable." ORDER BY q.rating DESC LIMIT ".$limit;
 	    quote_generation($query, lang('top_title'), -1);
 	    break;
 	case 'edit':
@@ -1001,11 +1003,11 @@ switch($page[0])
 			$order[] = 'WHEN '.$db->quote((int)$id).' THEN '.$idx.' ';
 			$idx++;
 		    }
-		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 and (".implode(' or ', $ids).") ORDER BY CASE id ".implode($order)." END";
+		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE (".implode(' or ', $ids).") ORDER BY CASE id ".implode($order)." END";
 		    if ($idx > 1) $title = lang('selected_quotes');
 		    else $title = "#${_SERVER['QUERY_STRING']}";
 		} else {
-		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE queue=0 and id =".$db->quote((int)$idlist[0]);
+		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE id=".$db->quote((int)$idlist[0]);
 		    $title = "#${idlist[0]}";
 		}
 		quote_generation($query, $title, -1);
