@@ -85,6 +85,7 @@ If (isset($_POST['submit'])) {
 		  'language' => "'".$_POST['language']."'",
 		  'captcha' => "'".$_POST['captcha']."'",
 		  'use_captcha' => "array(".(isset($_POST['use_captcha']) ? ("'".implode("'=>1, '", $_POST['use_captcha'])."'=>1"): '').")",
+		  'spam_regex' => "'".$_POST['spam_regex']."'",
 		  'admin_email' => "'".$_POST['admin_email']."'",
 		  'quote_limit' => $_POST['quote_limit'],
 		  'page_limit' => $_POST['page_limit'],
@@ -116,7 +117,7 @@ If (isset($_POST['submit'])) {
 					'USERSTABLE' => db_tablename('users'),
 					'TRACKINGTABLE' => db_tablename('tracking'),
 					'NEWSTABLE' => db_tablename('news'),
-					'SPAMTABLE' => db_tablename('spam'),
+					'SPAMTABLE' => db_tablename('spamlog'),
 					'ADMINUSER' => "'".$_POST['adminuser']."'",
 					'ADMINPASS' => "'\\$1".crypt($_POST['adminpass'], "$1$".substr($salt, 0, 8)."$")."'",
 					'ADMINSALT' => '\'\\$1\\$'.$salt.'\$\''
@@ -293,6 +294,10 @@ If (isset($_POST['submit'])) {
  <tr>
   <td>Use CAPTCHA For
   <td><?php foreach ($captcha_uses as $k=>$v) { echo '<input type="checkbox" name="use_captcha[]" value="'.$k.'" checked>'.$v.'<br>'; } ?>
+ </tr>
+ <tr>
+  <td>Spam Regex
+       <td><input type="text" name="spam_regex" value=""> (Any submitted quote matching this regex will go to spam table)
  </tr>
  <tr>
   <td>User Login required

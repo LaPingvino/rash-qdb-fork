@@ -34,6 +34,7 @@ $CONFIG['login_required'] = 0;   // User register & login required for adding/vo
 $CONFIG['auto_flagged_quotes'] = 0; // Quotes are automatically marked checked by a moderator when they're added.
 $CONFIG['captcha'] = 'nocaptcha';
 $CONFIG['use_captcha'] = array('flag'=>1, 'add_quote'=>0, 'register_user'=>1);
+$CONFIG['spam_regex'] = '&lt;a\s+href='; // Any quote matching this regex will go to hidden spam queue.
 $CONFIG['timezone'] = 'America/New_York';
 $CONFIG['news_time_format'] = 'Y-m-d';
 $CONFIG['quote_time_format'] = 'F j, Y';

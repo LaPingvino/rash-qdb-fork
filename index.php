@@ -305,6 +305,34 @@ function show_quote_voters($quoteid)
 
 }
 
+function show_spam()
+{
+    global $db, $TEMPLATE, $CONFIG;
+
+    $sql = 'SELECT * FROM '.db_tablename('spamlog');
+    $sth = $db->prepare($sql);
+    $sth->execute();
+    $trackingdata = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+    if (count($trackingdata)) {
+	$k = array_keys($trackingdata[0]);
+	print '<table>';
+	print '<tr>';
+	print '<th>'. join('</th><th>', $k).'</th>';
+	print '</tr>';
+
+	foreach ($trackingdata as $t) {
+	    print '<tr>';
+	    foreach ($k as $kk) {
+		print '<td>'. $t[$kk].'</td>';
+	    }
+	    print '</tr>';
+	}
+
+	print '</table>';
+    }
+}
+
 
 /************************************************************************
 ************************************************************************/
@@ -875,14 +903,18 @@ function add_quote_do_inner()
 {
     global $CONFIG, $TEMPLATE, $db;
     $flag = (isset($CONFIG['auto_flagged_quotes']) && ($CONFIG['auto_flagged_quotes'] == 1)) ? 2 : 0;
+    $spamre = (isset($CONFIG['spam_regex']) && $CONFIG['spam_regex'] != '') ? $CONFIG['spam_regex'] : NULL;
     $quotxt = htmlspecialchars(trim($_POST["rash_quote"]));
     $innerhtml = $TEMPLATE->add_quote_outputmsg(mangle_quote_text($quotxt));
-    if ($CONFIG['moderated_quotes']) {
+    $t = time();
+    if ($spamre && preg_match('/'.$spamre.'/', $quotxt)) {
+	$table = 'spam';
+    } elseif ($CONFIG['moderated_quotes']) {
 	$table = 'queue';
     } else {
 	$table = 'quotes';
     }
-    $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip) VALUES(".$db->quote($quotxt).", ".$db->quote($_SESSION['voteip']).")");
+    $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip, date) VALUES(".$db->quote($quotxt).", ".$db->quote($_SESSION['voteip']).", ".$t.")");
     return $innerhtml;
 }
 
@@ -1076,6 +1108,10 @@ switch($page[0])
 	case 'reorder':
 	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_SUPERUSER))
 		reorder_quotes();
+	    break;
+	case 'spam':
+	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN))
+		show_spam();
 	    break;
 	case 'news':
 	    news_page();
