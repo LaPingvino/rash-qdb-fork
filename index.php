@@ -812,15 +812,39 @@ function quote_queue($method)
 	}
 	$x = 0;
 	while (isset($judgement_array[$x])) {
+	    $qid = (int)substr($judgement_array[$x], 1);
+
 	    if(substr($judgement_array[$x], 0, 1) == 'y'){
 		$fields = 'quote,rating,flag,date,submitip';
-		$sql = "INSERT INTO ".db_tablename('quotes')." ($fields) SELECT $fields FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1));
+
+		$sql = "SELECT quote FROM ".db_tablename('queue')." WHERE id =".$db->quote($qid);
+		$res = $db->query($sql);
+		$tmpdata = $res->fetch(PDO::FETCH_ASSOC);
+		$quotetxt = $tmpdata['quote'];
+
+		$sql = "INSERT INTO ".db_tablename('quotes')." ($fields) SELECT $fields FROM ".db_tablename('queue')." WHERE id =".$db->quote($qid);
 		db_query($sql);
-		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
-		$TEMPLATE->add_message(sprintf(lang('quote_accepted'), substr($judgement_array[$x], 1)));
+
+		$sql = 'SELECT LAST_INSERT_ID() FROM '.db_tablename('quotes');
+		$res = $db->query($sql);
+		$tmpdata = $res->fetch(PDO::FETCH_NUM);
+		$quoteid = $tmpdata[0];
+
+		$qarr = preg_split('/\n/', html_entity_decode($quotetxt));
+		$sql = 'INSERT INTO '.db_tablename('dupes').' (normalized, quote_id) VALUES (?, ?)';
+		$stha = $db->prepare($sql);
+		foreach ($qarr as $l) {
+		    $l = normalize_quote_line($l);
+		    if (!((strlen($l) < 5) || (strpos($l,' ')===FALSE))) {
+			$stha->execute(array($l, $quoteid));
+		    }
+		}
+
+		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote($qid));
+		$TEMPLATE->add_message(sprintf(lang('quote_accepted'), $quoteid));
 	    } else {
-		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
-		$TEMPLATE->add_message(sprintf(lang('quote_deleted'), substr($judgement_array[$x], 1)));
+		$db->query("DELETE FROM ".db_tablename('queue')." WHERE id =".$db->quote($qid));
+		$TEMPLATE->add_message(sprintf(lang('quote_deleted'), $qid));
 	    }
 	    $x++;
 	}
