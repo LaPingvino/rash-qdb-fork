@@ -230,8 +230,8 @@ function normalize_quote_line($s)
 {
     $s = strtolower($s);
     $s = preg_replace('/[^a-z]/', ' ', $s);
-    $s = preg_replace('/\b[a-z]\b/', '', $s);
-    $s = preg_replace('/\b(the|teh|an)\b/', '', $s);
+    $s = preg_replace('/\b[a-z][a-z]?\b/', '', $s);
+    $s = preg_replace('/\b(the|teh)\b/', '', $s);
     $s = preg_replace('/\s+/', ' ', $s);
     $s = trim($s);
     return $s;
