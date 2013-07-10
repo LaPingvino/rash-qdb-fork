@@ -462,13 +462,27 @@ abstract class BaseTemplate {
     </form></div>';
     }
 
-    function quote_queue_page_iter($quoteid, $quotetxt)
+    function format_possible_dupes($dupes = NULL)
+    {
+	$str = '';
+	if ($dupes) {
+	    $str = ' ('.lang('possible_dupe').': ';
+	    $arr = array();
+	    foreach ($dupes as $d) {
+		array_push($arr, '<a href="?'.$d.'">'.$d.'</a>');
+	    }
+	    $str .= join(', ', $arr).')';
+	}
+	return $str;
+    }
+
+    function quote_queue_page_iter($quoteid, $quotetxt, $dupes=NULL)
     {
 	return '     <tr>
       <td class="quote_no">
        <label>'.lang('quote_queue_no').'<input type="radio" name="q'.$quoteid.'" value="n'.$quoteid.'"></label>
       </td>
-      <td>'.$this->edit_quote_button($quoteid).'
+      <td>'.$this->edit_quote_button($quoteid).$this->format_possible_dupes($dupes).'
         <div class="quote_quote">
 		'.$quotetxt.'
         </div>

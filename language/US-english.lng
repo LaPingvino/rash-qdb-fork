@@ -186,6 +186,7 @@ $lang = array (
 'import_quotes_btn' => 'Import',
 'import_separator_regex' => 'Quote separator regex',
 'import_quote_check_separator' => 'Check the separator regex, I only found one quote.',
+'possible_dupe' => 'Dupe?',
 'captcha_wronganswer' => 'Wrong answer to the CAPTCHA question.',
 'captcha_wrongid' => 'CAPTCHA id is wrong?'
 );

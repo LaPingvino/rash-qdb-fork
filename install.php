@@ -118,6 +118,7 @@ If (isset($_POST['submit'])) {
 					'TRACKINGTABLE' => db_tablename('tracking'),
 					'NEWSTABLE' => db_tablename('news'),
 					'SPAMTABLE' => db_tablename('spamlog'),
+					'DUPETABLE' => db_tablename('dupes'),
 					'ADMINUSER' => "'".$_POST['adminuser']."'",
 					'ADMINPASS' => "'\\$1".crypt($_POST['adminpass'], "$1$".substr($salt, 0, 8)."$")."'",
 					'ADMINSALT' => '\'\\$1\\$'.$salt.'\$\''

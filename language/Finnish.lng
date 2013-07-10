@@ -185,6 +185,7 @@ $lang = array (
 'import_quotes_btn' => 'Tuo',
 'import_separator_regex' => 'Lainauksien välinen regex',
 'import_quote_check_separator' => 'Tarkista lainauksien välinen regex, löysin vain yhden lainauksen.',
+'possible_dupe' => 'Kopio?',
 'captcha_wronganswer' => 'Väärä vastaus CAPTCHA-kysymykseen.',
 'captcha_wrongid' => 'CAPTCHA id-numero on väärin?'
 );

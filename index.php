@@ -226,6 +226,87 @@ function home_generation()
     print $TEMPLATE->main_page($news);
 }
 
+function normalize_quote_line($s)
+{
+    $s = strtolower($s);
+    $s = preg_replace('/[^a-z]/', ' ', $s);
+    $s = preg_replace('/\b[a-z]\b/', '', $s);
+    $s = preg_replace('/\b(the|teh|an)\b/', '', $s);
+    $s = preg_replace('/\s+/', ' ', $s);
+    $s = trim($s);
+    return $s;
+}
+
+function find_maybe_dupes($quotetxt)
+{
+    global $db, $TEMPLATE, $CONFIG;
+
+    $qarr = preg_split('/\n/', html_entity_decode($quotetxt));
+
+    $sql = 'SELECT DISTINCT(quote_id) FROM '.db_tablename('dupes').' WHERE normalized IN (';
+
+    $lines = array();
+
+    $added = 0;
+    foreach ($qarr as $l) {
+	$l = normalize_quote_line($l);
+	if (!((strlen($l) < 5) || (strpos($l,' ')===FALSE))) {
+	    if ($added) $sql .= ', ';
+	    $sql .= '?';
+	    $added = 1;
+	    array_push($lines, $l);
+	}
+    }
+
+    $sql .= ')';
+
+    $stha = $db->prepare($sql);
+    $stha->execute($lines);
+    $row = $stha->fetchAll(PDO::FETCH_NUM);
+
+    $ret = array();
+
+    foreach ($row as $r) {
+	array_push($ret, $r[0]);
+    }
+
+    return $ret;
+}
+
+function populate_dupe_table()
+{
+    global $db, $TEMPLATE, $CONFIG;
+
+    $sql = 'SELECT * FROM '.db_tablename('quotes').' ORDER BY id asc';
+    $stmt = $db->query($sql);
+    check_db_res($stmt, $sql);
+
+    $quotedata = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    db_query('DELETE FROM '.db_tablename('dupes'));
+
+    $sql = 'INSERT INTO '.db_tablename('dupes').' (normalized, quote_id) VALUES (?, ?)';
+    $stha = $db->prepare($sql);
+
+    print 'populating dupe table:';
+
+    for ($i = 0; $i < count($quotedata); $i++) {
+	$q = $quotedata[$i];
+	$qid = $q['id'];
+
+	$quotetxt = $q['quote'];
+	$qarr = preg_split('/\n/', html_entity_decode($quotetxt));
+	foreach ($qarr as $l) {
+	    $l = normalize_quote_line($l);
+	    if (!((strlen($l) < 5) || (strpos($l,' ')===FALSE)))
+		$stha->execute(array($l, $qid));
+	}
+	if (($i % 100) == 0) print '<br>';
+	print '.';
+    }
+    print '<br>done';
+}
+
 function reorder_quotes()
 {
     global $db, $TEMPLATE, $CONFIG;
@@ -752,7 +833,8 @@ function quote_queue($method)
     $innerhtml = '';
     $x = 0;
     while ($row = $res->fetch()) {
-	$innerhtml .= $TEMPLATE->quote_queue_page_iter($row['id'], mangle_quote_text($row['quote']));
+	$dupes = find_maybe_dupes($row['quote']);
+	$innerhtml .= $TEMPLATE->quote_queue_page_iter($row['id'], mangle_quote_text($row['quote']), $dupes);
 	$x++;
     }
 
@@ -1148,6 +1230,10 @@ switch($page[0])
 	case 'spam':
 	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN))
 		show_spam();
+	    break;
+	case 'populate_dupe_table':
+	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN))
+		populate_dupe_table();
 	    break;
 	case 'news':
 	    news_page();

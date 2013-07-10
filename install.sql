@@ -42,5 +42,9 @@ create table $SPAMTABLE$ (id int NOT NULL auto_increment primary key,
 			  date int(10),
 			  quote text);
 
+create table $DUPETABLE$ (id int NOT NULL auto_increment primary key,
+                          normalized text not null,
+			  quote_id int not null);
+
 insert into $USERSTABLE$ (user, password, level, salt) values (
        	    		 '$ADMINUSER$', '$ADMINPASS$', 1, '$ADMINSALT$');
