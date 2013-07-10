@@ -312,7 +312,7 @@ function edit_user_page_table($innerhtml)
     <table>
     <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="user_login_username-box" /></td></tr>
     <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="user_login_password-box" /></td></tr>
-    <tr><td>'.lang('login_remember').'</td><td><input type="checkbox" name="remember_login"></td></tr>
+    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="user_login_submit-button" /></td></tr>
     </table>
     </form></div>';
@@ -326,7 +326,7 @@ function admin_login_page()
     <table>
     <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="admin_login_username-box" /></td></tr>
     <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="admin_login_password-box" /></td></tr>
-    <tr><td>'.lang('login_remember').'</td><td><input type="checkbox" name="remember_login"></td></tr>
+    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="admin_login_submit-button" /></td></tr>
     </table>
     </form></div>';
