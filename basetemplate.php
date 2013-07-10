@@ -466,12 +466,12 @@ abstract class BaseTemplate {
     {
 	$str = '';
 	if ($dupes) {
-	    $str = ' ('.lang('possible_dupe').': ';
+	    $str = ' <span class="maybe_dupe">('.lang('possible_dupe').': ';
 	    $arr = array();
 	    foreach ($dupes as $d) {
 		array_push($arr, '<a href="?'.$d.'">'.$d.'</a>');
 	    }
-	    $str .= join(', ', $arr).')';
+	    $str .= join(', ', $arr).')</span>';
 	}
 	return $str;
     }

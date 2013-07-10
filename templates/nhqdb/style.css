@@ -28,6 +28,10 @@ input:focus {
     background-color: #fffff0;
 }
 
+.maybe_dupe {
+  font-weight: bold;
+}
+
 .dbtable td,
 .dbtable th {
   padding-left: 0.75em;
