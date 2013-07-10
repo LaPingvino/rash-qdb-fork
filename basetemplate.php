@@ -189,6 +189,28 @@ abstract class BaseTemplate {
 	return $str;
     }
 
+    function import_data_page($quotetxt='', $regex=null, $added_quote_html='', $wasadded=null)
+    {
+	global $CAPTCHA;
+	$str = '<div id="import_data_all">';
+
+	$str .= '<h1 id="add_title">'.lang('import_data_title').'</h1>';
+
+	$str .= $added_quote_html;
+
+	$str .= '<form action="?'.urlargs('import','submit').'" method="post">
+        <textarea cols="80" rows="25" name="rash_quote" id="add_quote">'.($wasadded ? '' : $quotetxt).'</textarea><br />
+	'.lang('import_separator_regex').' <input type="text" name="separator_regex" value="'.($regex ? $regex : '^%\s*$').'"><br />';
+	$str .= $CAPTCHA->get_CAPTCHA('add_quote');
+        $str .= '
+        <input type="submit" value="'.lang('import_quotes_btn').'" id="add_submit" name="submit" />
+        <input type="reset" value="'.lang('add_reset_btn').'" id="add_reset" />
+        </form>';
+
+	$str .= '</div>';
+	return $str;
+    }
+
 
     function edit_quote_outputmsg($quotetxt)
     {

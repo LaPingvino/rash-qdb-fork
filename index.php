@@ -80,6 +80,7 @@ if (isset($_SESSION['logged_in'])) {
 	$adminmenu[] = array('url' => '?flag_queue', 'id' => 'site_admin_nav_flagged', 'txt' => 'menu_flagged');
     }
     if ($_SESSION['level'] <= USER_ADMIN) {
+	$adminmenu[] = array('url' => '?import', 'id' => 'site_admin_nav_import', 'txt' => 'import_quotes');
 	$adminmenu[] = array('url' => '?add_news', 'id' => 'site_admin_nav_add-news', 'txt' => 'menu_addnews');
 	$adminmenu[] = array('url' => '?edit_news', 'id' => 'site_admin_nav_edit-news', 'txt' => 'menu_editnews');
     }
@@ -924,6 +925,56 @@ function add_quote($method)
     print $TEMPLATE->add_quote_page($quotxt, $innerhtml, $added);
 }
 
+function import_quotes_do_inner()
+{
+    global $CONFIG, $TEMPLATE, $db;
+    $flag = (isset($CONFIG['auto_flagged_quotes']) && ($CONFIG['auto_flagged_quotes'] == 1)) ? 2 : 0;
+    $spamre = (isset($CONFIG['spam_regex']) && $CONFIG['spam_regex'] != '') ? $CONFIG['spam_regex'] : NULL;
+    $sep = html_entity_decode($_POST['separator_regex']);
+    $quotes = preg_split("/".$sep."/m", html_entity_decode(trim($_POST['rash_quote'])));
+
+    foreach ($quotes as $quotxt) {
+	$quotxt = htmlspecialchars(trim($quotxt));
+	if (!(strlen($quotxt) < $CONFIG['min_quote_length'])) {
+	    $t = time();
+	    $ip = $_SERVER['REMOTE_ADDR'];
+	    if ($CONFIG['moderated_quotes']) {
+		$table = 'queue';
+	    } else {
+		$table = 'quotes';
+	    }
+	    $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip, date) VALUES(".$db->quote($quotxt).", ".$db->quote($ip).", ".$t.")");
+	}
+    }
+    return '';
+}
+
+function import_quotes($method)
+{
+    global $CONFIG, $TEMPLATE, $CAPTCHA, $db;
+    $innerhtml = '';
+    $added = 0;
+    $qpost = '';
+    $regex = NULL;
+    if ($method == 'submit') {
+	$sep = html_entity_decode($_POST['separator_regex']);
+	$quotes = preg_split("/".$sep."/m", html_entity_decode(trim($_POST['rash_quote'])));
+
+	$nquotes = count($quotes);
+
+	if ($nquotes < 2) {
+	    $TEMPLATE->add_message(lang('import_quote_check_separator'));
+	    $qpost = $_POST['rash_quote'];
+	    $regex = $_POST['separator_regex'];
+	} else {
+	    $innerhtml = handle_captcha('import_quotes', 'import_quotes_do_inner');
+	    $added++;
+	}
+    }
+    print $TEMPLATE->import_data_page($qpost, $regex, $innerhtml, $added);
+}
+
+
 
 
 $page[1] = 0;
@@ -955,6 +1006,10 @@ switch($page[0])
 	    if (isset($CONFIG['login_required']) && ($CONFIG['login_required'] == 1) && !isset($_SESSION['logged_in']))
 		break;
 	    add_quote($page[1]);
+	    break;
+	case 'import':
+	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN))
+		import_quotes($page[1]);
 	    break;
 	case 'edit_news':
 	    if (isset($_SESSION['logged_in']) && ($_SESSION['level'] <= USER_ADMIN)) {
