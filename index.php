@@ -890,7 +890,7 @@ function add_quote_do_inner()
     $t = time();
     $ip = $_SERVER['REMOTE_ADDR'];
     if ($spamre && preg_match('/'.$spamre.'/', $quotxt)) {
-	$table = 'spam';
+	$table = 'spamlog';
     } elseif ($CONFIG['moderated_quotes']) {
 	$table = 'queue';
     } else {
