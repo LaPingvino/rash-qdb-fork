@@ -99,7 +99,7 @@ $TEMPLATE->set_menu(1, $adminmenu);
 function get_db_stats()
 {
     $ret['pending_quotes'] = db_query_singlevalue('SELECT count(id) FROM '.db_tablename('queue'));
-    $ret['approved_quotes'] = db_query_singlevalue('SELECT count(id) FROM '.db_tablename('quotes'));
+    $ret['approved_quotes'] = db_query_singlevalue('SELECT count(id) FROM '.db_tablename('quotes').' WHERE (flag!=3)');
     return $ret;
 }
 
@@ -122,7 +122,7 @@ function handle_captcha($type, $func, &$param=null)
 function rash_rss()
 {
     global $CONFIG, $TEMPLATE;
-    $res = db_query("SELECT * FROM ".db_tablename('quotes')." ORDER BY id DESC LIMIT " . $CONFIG['rss_entries']);
+    $res = db_query('SELECT * FROM '.db_tablename('quotes').' WHERE (flag!=3) ORDER BY id DESC LIMIT ' . $CONFIG['rss_entries']);
     $items = '';
     while($row=$res->fetch()) {
 	$title = $CONFIG['rss_url']."/?".$row['id'];
@@ -141,6 +141,9 @@ function flag_do_inner($row)
     elseif($row['flag'] == 1){
 	$TEMPLATE->add_message(lang('flag_currently_flagged'));
     }
+    elseif($row['flag'] == 3){
+	/* hidden */
+    }
     else{
 	$TEMPLATE->add_message(lang('flag_quote_flagged'));
 	db_query("UPDATE ".db_tablename('quotes')." SET flag = 1 WHERE id = ?", $row['id']);
@@ -153,7 +156,7 @@ function flag($quote_num, $method)
 {
     global $CONFIG, $TEMPLATE, $CAPTCHA, $db;
 
-    $row = $db->query("SELECT id,flag,quote FROM ".db_tablename('quotes')." WHERE id = ".$db->quote((int)$quote_num)." LIMIT 1")->fetch();
+    $row = $db->query("SELECT id,flag,quote FROM ".db_tablename('quotes')." WHERE (flag!=3) AND id = ".$db->quote((int)$quote_num)." LIMIT 1")->fetch();
 
     if ($method == 'verdict') {
 	$row = handle_captcha('flag', 'flag_do_inner', $row);
@@ -182,10 +185,10 @@ function vote($quote_num, $method, $ajaxy=FALSE)
     $vote = 0;
     if ($method == "plus") {
 	$vote = 1;
-	$db->query("UPDATE ".db_tablename('quotes')." SET rating = rating+1 WHERE id = ".$db->quote((int)$quote_num));
+	$db->query("UPDATE ".db_tablename('quotes')." SET rating = rating+1 WHERE (flag!=3) AND id = ".$db->quote((int)$quote_num));
     } elseif ($method == "minus") {
 	$vote = -1;
-	$db->query("UPDATE ".db_tablename('quotes')." SET rating = rating-1 WHERE id = ".$db->quote((int)$quote_num));
+	$db->query("UPDATE ".db_tablename('quotes')." SET rating = rating-1 WHERE (flag!=3) AND id = ".$db->quote((int)$quote_num));
     }
     if ($vote != 0) {
 	$t = time();
@@ -400,7 +403,7 @@ function show_spam()
 function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 {
     global $CONFIG, $db;
-    $numrows = $db->query("SELECT COUNT(id) AS cnt FROM ".db_tablename('quotes'))->fetch();
+    $numrows = $db->query("SELECT COUNT(id) AS cnt FROM ".db_tablename('quotes').' WHERE (flag!=3)')->fetch();
     $testrows = $numrows['cnt'];
 
     $pagenum = 0;
@@ -865,6 +868,12 @@ function quote_queue($method)
     print $TEMPLATE->quote_queue_page($innerhtml);
 }
 
+/* The meaning of flags:
+    0 = not flagged
+    1 = user has flagged the quote for admin attention
+    2 = admin has checked the quote, and accepted it
+    3 = admin has checked the quote, and "deleted" it
+ */
 
 function flag_queue($method)
 {
@@ -876,8 +885,7 @@ function flag_queue($method)
 		    $db->query("UPDATE ".db_tablename('quotes')." SET flag=2 WHERE flag=1");
 		    $TEMPLATE->add_message(lang('unflagged_all'));
 		} else if (isset($_POST['delete_all'])) {
-		    $db->query("DELETE FROM ".db_tablename('tracking')." WHERE quote_id IN (SELECT id FROM ".db_tablename('quotes')." WHERE flag=1)");
-		    $db->query("DELETE FROM ".db_tablename('quotes')." WHERE flag=1");
+		    $db->query("UPDATE ".db_tablename('quotes')." SET flag=3 WHERE flag=1");
 		    $TEMPLATE->add_message(lang('deleted_all'));
 		}
 	    }
@@ -894,12 +902,11 @@ function flag_queue($method)
 	    $x = 0;
 	    while (isset($judgement_array[$x])) {
 		if(substr($judgement_array[$x], 0, 1) == 'u'){
-		    $db->query("UPDATE ".db_tablename('quotes')." SET flag = 2 WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
+		    $db->query("UPDATE ".db_tablename('quotes')." SET flag=2 WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
 		    $TEMPLATE->add_message(sprintf(lang('quote_unflagged'), substr($judgement_array[$x], 1)));
 		}
 		if(substr($judgement_array[$x], 0, 1) == 'd'){
-		    $db->query("DELETE FROM ".db_tablename('quotes')." WHERE id=".$db->quote((int)substr($judgement_array[$x], 1)));
-		    $db->query("DELETE FROM ".db_tablename('tracking')." WHERE quote_id=".$db->quote((int)substr($judgement_array[$x], 1)));
+		    $db->query("UPDATE ".db_tablename('quotes')." SET flag=3 WHERE id =".$db->quote((int)substr($judgement_array[$x], 1)));
 		    $TEMPLATE->add_message(sprintf(lang('quote_deleted'), substr($judgement_array[$x], 1)));
 		}
 		$x++;
@@ -909,7 +916,7 @@ function flag_queue($method)
 	$innerhtml = '';
 
 	$x = 0;
-	$res = $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE flag = 1 ORDER BY id ASC");
+	$res = $db->query("SELECT * FROM ".db_tablename('quotes')." WHERE flag=1 ORDER BY id ASC");
 	while ($row = $res->fetch()) {
 	    $innerhtml .= $TEMPLATE->flag_queue_page_iter($row['id'], mangle_quote_text($row['quote']));
 	    $x++;
@@ -951,7 +958,7 @@ function search($method, $searchparam=null)
 
 	$searchx = '%'.$search.'%';
 
-	$query = "SELECT * FROM ".db_tablename('quotes')." WHERE (quote LIKE ".$db->quote($searchx).$exactmatch.") ORDER BY ".$sortby." $how LIMIT ".$limit;
+	$query = "SELECT * FROM ".db_tablename('quotes')." WHERE (flag!=3) AND (quote LIKE ".$db->quote($searchx).$exactmatch.") ORDER BY ".$sortby." $how LIMIT ".$limit;
 
 	quote_generation($query, lang('search_results_title'), -1);
     } else $search = '';
@@ -1156,11 +1163,11 @@ switch($page[0])
 		}
 		break;
 	case 'bottom':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating < 0 ".$voteable." ORDER BY q.rating ASC LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.rating < 0 ".$voteable." ORDER BY q.rating ASC LIMIT ".$limit;
 	    quote_generation($query, lang('bottom_title'), -1);
 	    break;
 	case 'browse':
-		$query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE TRUE ".$voteable." ORDER BY q.id ASC ";
+		$query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) ".$voteable." ORDER BY q.id ASC ";
 		quote_generation($query, lang('browse_title'), $page[1], $CONFIG['quote_limit'], $CONFIG['page_limit']);
 		break;
 	case 'change_pw':
@@ -1177,11 +1184,11 @@ switch($page[0])
 		flag_queue($page[1]);
 	    break;
 	case 'latest':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE TRUE ".$voteable." ORDER BY q.id DESC";
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) ".$voteable." ORDER BY q.id DESC";
 	    if (isset($_SESSION['lastvisit'])) {
-		$nlatest = $db->query("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE q.date>=".$db->quote($_SESSION['lastvisit']).$voteable)->fetch();
+		$nlatest = $db->query("SELECT count(1) FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable)->fetch();
 		if (($nlatest >= $CONFIG['min_latest']) && ($nlatest <= $CONFIG['quote_list_limit'])) {
-		    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.date>=".$db->quote($_SESSION['lastvisit']).$voteable." ORDER BY q.id DESC";
+		    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.date>=".$db->quote($_SESSION['lastvisit']).$voteable." ORDER BY q.id DESC";
 		}
 	    }
 	    quote_generation($query, lang('latest_title'), $page[1], $CONFIG['quote_limit'], $CONFIG['page_limit']);
@@ -1200,22 +1207,22 @@ switch($page[0])
 	    }
 	    break;
 	case 'random':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE TRUE ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random_title'), -1);
 	    break;
 	case 'random2':
 	case 'randomplus':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating>0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.rating>0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random2_title'), -1);
 	    break;
 	case 'random3':
 	case 'random0':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating=0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.rating=0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random3_title'), -1);
 	    break;
 	case 'random4':
 	case 'randomminus':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating<0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.rating<0 ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random4_title'), -1);
 	    break;
 	case 'rss':
@@ -1225,7 +1232,7 @@ switch($page[0])
 	    search($page[1], $pageparam);
 	    break;
 	case 'top':
-	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE q.rating > 0 ".$voteable." ORDER BY q.rating DESC LIMIT ".$limit;
+	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) AND q.rating > 0 ".$voteable." ORDER BY q.rating DESC LIMIT ".$limit;
 	    quote_generation($query, lang('top_title'), -1);
 	    break;
 	case 'edit':
@@ -1274,11 +1281,11 @@ switch($page[0])
 			$order[] = 'WHEN '.$db->quote((int)$id).' THEN '.$idx.' ';
 			$idx++;
 		    }
-		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE (".implode(' or ', $ids).") ORDER BY CASE id ".implode($order)." END";
+		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE (flag!=3) AND (".implode(' or ', $ids).") ORDER BY CASE id ".implode($order)." END";
 		    if ($idx > 1) $title = lang('selected_quotes');
 		    else $title = "#${_SERVER['QUERY_STRING']}";
 		} else {
-		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE id=".$db->quote((int)$idlist[0]);
+		    $query = "SELECT * FROM ".db_tablename('quotes')." WHERE (flag!=3) AND id=".$db->quote((int)$idlist[0]);
 		    $title = "#${idlist[0]}";
 		}
 		quote_generation($query, $title, -1);
