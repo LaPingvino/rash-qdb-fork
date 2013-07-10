@@ -287,7 +287,7 @@ function get_table_data($sql, $params=NULL)
     if (count($dat)) {
 	$s = '';
 	$k = array_keys($dat[0]);
-	$s .= '<table>';
+	$s .= '<table class="dbtable">';
 	$s .= '<tr><th>'. join('</th><th>', $k).'</th></tr>';
 	foreach ($dat as $t) {
 	    $s .= '<tr>';

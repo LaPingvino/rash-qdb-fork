@@ -28,6 +28,18 @@ input:focus {
     background-color: #fffff0;
 }
 
+.dbtable td,
+.dbtable th {
+  padding-left: 0.75em;
+  padding-right: 0.75em;
+}
+.dbtable tr:hover {
+  background-color:#e8e8e8 !important;
+}
+.dbtable tr:nth-child(even) {
+  background-color:#f0f0f0;
+}
+
 /* quote-output styles */
 
 #editquote_outputmsg_quote {
