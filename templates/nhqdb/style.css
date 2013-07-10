@@ -177,18 +177,18 @@ html>body div#site_admin_nav{ /* hack for firefox, disabled in opera and ie */
 .admin_queue tr {
 	background-color: #f0f0f0;
 }
-.admin_queue .quote_delete label,
-.admin_queue .quote_unflag label,
-.admin_queue .quote_no label,
-.admin_queue .quote_yes label {
-  display:block;
+.admin_queue .quote_delete,
+.admin_queue .quote_unflag,
+.admin_queue .quote_no,
+.admin_queue .quote_yes {
+  padding: 2em;
 }
-.admin_queue .quote_delete label:hover,
-.admin_queue .quote_no label:hover {
+.admin_queue .quote_delete:hover,
+.admin_queue .quote_no:hover {
   background-color:pink;
 }
-.admin_queue .quote_unflag label:hover,
-.admin_queue .quote_yes label:hover {
+.admin_queue .quote_unflag:hover,
+.admin_queue .quote_yes:hover {
   background-color:lightgreen;
 }
 

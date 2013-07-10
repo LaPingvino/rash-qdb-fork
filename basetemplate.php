@@ -285,7 +285,7 @@ abstract class BaseTemplate {
     function flag_queue_page_iter($quoteid, $quotetxt)
     {
 	return '<tr>
-<td class="quote_delete">
+<td class="quote_delete" onclick="javascript:this.firstElementChild.click();">
 	<label>'.lang('flag_quote_delete').'<input type="radio" name="q'.$quoteid.'" value="d'.$quoteid.'"></label>
 </td>
 <td>
@@ -293,7 +293,7 @@ abstract class BaseTemplate {
 
 </div>
 </td>
-<td class="quote_unflag">
+<td class="quote_unflag" onclick="javascript:this.firstElementChild.click();">
 	<label><input type="radio" name="q'.$quoteid.'" value="u'.$quoteid.'">'.lang('flag_quote_unflag').'</label>
 </td>
 </tr>';
@@ -479,7 +479,7 @@ abstract class BaseTemplate {
     function quote_queue_page_iter($quoteid, $quotetxt, $dupes=NULL)
     {
 	return '     <tr>
-      <td class="quote_no">
+      <td class="quote_no" onclick="javascript:this.firstElementChild.click();">
        <label>'.lang('quote_queue_no').'<input type="radio" name="q'.$quoteid.'" value="n'.$quoteid.'"></label>
       </td>
       <td>'.$this->edit_quote_button($quoteid).$this->format_possible_dupes($dupes).'
@@ -487,7 +487,7 @@ abstract class BaseTemplate {
 		'.$quotetxt.'
         </div>
       </td>
-	  <td class="quote_yes">
+	  <td class="quote_yes" onclick="javascript:this.firstElementChild.click();">
        <label><input type="radio" name="q'.$quoteid.'" value="y'.$quoteid.'" style="text-align: right">'.lang('quote_queue_yes').'</label>
 	  </td>
      </tr>
