@@ -181,6 +181,11 @@ $lang = array (
 'quote_queue_yes' => 'Yes',
 'quote_queue_submit_btn' => 'Submit Query',
 'quote_queue_reset_btn' => 'Reset',
+'import_quotes' => 'Import',
+'import_data_title' => 'Import Quotes',
+'import_quotes_btn' => 'Import',
+'import_separator_regex' => 'Quote separator regex',
+'import_quote_check_separator' => 'Check the separator regex, I only found one quote.',
 'captcha_wronganswer' => 'Wrong answer to the CAPTCHA question.',
 'captcha_wrongid' => 'CAPTCHA id is wrong?'
 );

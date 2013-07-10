@@ -180,6 +180,11 @@ $lang = array (
 'quote_queue_yes' => 'Kyllä',
 'quote_queue_submit_btn' => 'Tallenna',
 'quote_queue_reset_btn' => 'Reset',
+'import_quotes' => 'Tuo',
+'import_data_title' => 'Tuo lainauksia',
+'import_quotes_btn' => 'Tuo',
+'import_separator_regex' => 'Lainauksien välinen regex',
+'import_quote_check_separator' => 'Tarkista lainauksien välinen regex, löysin vain yhden lainauksen.',
 'captcha_wronganswer' => 'Väärä vastaus CAPTCHA-kysymykseen.',
 'captcha_wrongid' => 'CAPTCHA id-numero on väärin?'
 );
