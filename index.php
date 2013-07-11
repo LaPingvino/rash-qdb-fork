@@ -244,6 +244,17 @@ function find_maybe_dupes($quotetxt)
 {
     global $db, $TEMPLATE, $CONFIG;
 
+    $ret = array();
+
+    $sql = 'SELECT DISTINCT(id) FROM '.db_tablename('quotes').' WHERE quote = ?';
+    $stha = $db->prepare($sql);
+    $stha->execute(array($quotetxt));
+    $row = $stha->fetchAll(PDO::FETCH_NUM);
+    foreach ($row as $r) {
+	array_push($ret, $r[0]);
+    }
+    if (count($ret)) return $ret;
+
     $qarr = preg_split('/\n/', html_entity_decode($quotetxt));
 
     $sql = 'SELECT DISTINCT(quote_id) FROM '.db_tablename('dupes').' WHERE normalized IN (';
@@ -266,8 +277,6 @@ function find_maybe_dupes($quotetxt)
     $stha = $db->prepare($sql);
     $stha->execute($lines);
     $row = $stha->fetchAll(PDO::FETCH_NUM);
-
-    $ret = array();
 
     foreach ($row as $r) {
 	array_push($ret, $r[0]);
