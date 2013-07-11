@@ -1240,6 +1240,9 @@ switch($page[0])
 		quote_generation($query, lang('quote_queue_title'), -1);
 	    }
 	    break;
+	case 'random1':
+	    $limit = 1;
+	    /* fallthrough */
 	case 'random':
 	    $query = "SELECT q.* FROM ".db_tablename('quotes')." q WHERE (q.flag!=3) ".$voteable." ORDER BY rand() LIMIT ".$limit;
 	    quote_generation($query, lang('random_title'), -1);
