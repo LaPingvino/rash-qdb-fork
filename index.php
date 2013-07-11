@@ -419,6 +419,9 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 
     $ret = '';
 
+    $sep = '<span class="sep">&nbsp;&nbsp;</span>';
+    $skipamount = 10;
+
     do {
 	$pagenum++;
         $testrows -= $quote_limit;
@@ -435,42 +438,64 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 	$page_base++;
 	$page_limit -= 2;
     } while ($page_limit > 1);
-    $ret .= "<div class=\"quote_pagenums\">";
-    $ret .= "<a href=\"?".urlargs(strtolower($origin),'1')."\">".lang('page_first')."</a>&nbsp;&nbsp;";
-    $ret .= "<a href=\"?".urlargs(strtolower($origin),
-					     ((($page_default-10) > 1) ? ($page_default-10) : (1)))
-		."\">-10</a>&nbsp;&nbsp;";
+    $ret .= '<div class="quote_pagenums">';
+
+    if ($page_default != 1) {
+	$ret .= '<a class="first" href="?'.urlargs(strtolower($origin),'1').'">'.lang('page_first').'</a>';
+    } else {
+	$ret .= '<span class="nolink first">'.lang('page_first').'</span>';
+    }
+    $ret .= $sep;
+
+    if ($page_default-$skipamount >= 1) {
+	$ret .= '<a class="skipback" href="?'.urlargs(strtolower($origin),
+					     ((($page_default-$skipamount) > 1) ? ($page_default-$skipamount) : (1)))
+	    .'">'.-($skipamount).'</a>';
+    } else {
+	$ret .= '<span class="nolink skipback">'.-($skipamount).'</span>';
+    }
+    $ret .= $sep;
 
     if (($page_default - $page_base) > 1) {
-	$ret .= "&nbsp;...&nbsp;";
+	$ret .= '<span class="ellipsis">...</span>'.$sep;
     }
     $x = ($page_default - $page_base);
 
     do {
 	if($x > 0)
-	    $ret .= "&nbsp;<a href=\"?".urlargs(strtolower($origin),$x)."\">${x}</a>&nbsp;";
+	    $ret .= '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>'.$sep;
 	$x++;
     } while ($x < $page_default);
 
-    $ret .= "&nbsp;${page_default}&nbsp;";
+    $ret .= '<span class="nolink currpage">'.$page_default.'</span>'.$sep;
 
     $x = ($page_default + 1);
 
     do {
 	if($x <= $pagenum)
-	    $ret .= "&nbsp;<a href=\"?".urlargs(strtolower($origin),$x)."\">${x}</a>&nbsp;";
+	    $ret .= '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>'.$sep;
 	$x++;
     } while ($x < ($page_default + $page_base + 1));
 
     if (($page_default + $page_base) < $pagenum) {
-	$ret .= "&nbsp;...&nbsp;";
+	$ret .= '<span class="ellipsis">...</span>'.$sep;
     }
 
-    $ret .= "&nbsp;&nbsp;<a href=\"?".urlargs(strtolower($origin),
-						   ((($page_default+10) < $pagenum) ? ($page_default+10) : ($pagenum)))
-		."\">+10</a>&nbsp;&nbsp;";
+    if ($page_default+$skipamount <= $pagenum) {
+	$ret .= '<a class="skipfwd" href="?'.urlargs(strtolower($origin),
+				     ((($page_default+$skipamount) < $pagenum) ? ($page_default+$skipamount) : ($pagenum)))
+		.'">+'.$skipamount.'</a>';
+    } else {
+	$ret .= '<span class="nolink skipfwd">+'.$skipamount.'</span>';
+    }
+    $ret .= $sep;
 
-    $ret .= "&nbsp;&nbsp;<a href=\"?".urlargs(strtolower($origin),$pagenum)."\">".lang('page_last')."</a>";
+    if ($page_default < $pagenum) {
+	$ret .= '<a href="?'.urlargs(strtolower($origin),$pagenum).'">'.lang('page_last').'</a>';
+    } else {
+	$ret .= '<span class="nolink last">'.lang('page_last').'</span>';
+    }
+
     $ret .= "</div>\n";
     return $ret;
 }

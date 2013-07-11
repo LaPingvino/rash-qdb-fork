@@ -240,6 +240,27 @@ div#add_outputmsg_quote{
 div.quote_pagenums{
 	text-align: center;
 }
+.quote_pagenums .sep { display: none; }
+.quote_pagenums a,
+.quote_pagenums span {
+    width:3em;
+    padding:0 1em;
+}
+.quote_pagenums a:hover {
+    background-color: lightgrey;
+    color: black;
+}
+.quote_pagenums .currpage {
+    font-weight: bold;
+    color: black;
+}
+.quote_pagenums span {
+    color: #888;
+}
+.quote_pagenums .ellipsis {
+    color: #ccc;
+}
+
 
 table.users {
     border-collapse:collapse;
