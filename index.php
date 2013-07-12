@@ -159,7 +159,7 @@ function flag($quote_num, $method)
     $row = $db->query("SELECT id,flag,quote FROM ".db_tablename('quotes')." WHERE (flag!=3) AND id = ".$db->quote((int)$quote_num)." LIMIT 1")->fetch();
 
     if ($method == 'verdict') {
-	$row = handle_captcha('flag', 'flag_do_inner', $row);
+	$ret = handle_captcha('flag', 'flag_do_inner', $row);
     } else {
 	if($row['flag'] == 2){
 	    $TEMPLATE->add_message(lang('flag_previously_flagged'));
@@ -698,7 +698,7 @@ function register_user($method)
 	if (check_username($username)) {
 	    if ($_POST['verifypassword'] == $_POST['password']) {
 		$row = array('username' => $username, 'password' => $_POST['password']);
-		$row = handle_captcha('register_user', 'register_user_do_inner', $row);
+		$ret = handle_captcha('register_user', 'register_user_do_inner', $row);
 	    } else $TEMPLATE->add_message(lang('password_verification_mismatch'));
 	}
     }
@@ -1073,7 +1073,7 @@ function add_quote($method)
 	    if (isset($_POST['preview'])) {
 		$innerhtml = $TEMPLATE->add_quote_preview(mangle_quote_text($quotxt));
 	    } else {
-		$innerhtml = handle_captcha('add_quote', 'add_quote_do_inner');
+		$ret = handle_captcha('add_quote', 'add_quote_do_inner');
 		$added = 1;
 	    }
 	}
@@ -1124,7 +1124,7 @@ function import_quotes($method)
 	    $qpost = $_POST['rash_quote'];
 	    $regex = $_POST['separator_regex'];
 	} else {
-	    $innerhtml = handle_captcha('import_quotes', 'import_quotes_do_inner');
+	    $ret = handle_captcha('import_quotes', 'import_quotes_do_inner');
 	    $added++;
 	}
     }
