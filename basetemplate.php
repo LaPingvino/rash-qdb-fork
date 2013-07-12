@@ -224,9 +224,9 @@ abstract class BaseTemplate {
 	return $str;
     }
 
-    function edit_quote_button($quoteid)
+    function edit_quote_button($quoteid, $queue=0)
     {
-	return '<a href="?'.urlargs('edit','edit',$quoteid).'" class="quote_edit" title="'.lang('editquote').'">[E]</a>';
+	return '<a href="?'.urlargs(($queue ? 'editqueue' : 'edit'),'edit',$quoteid).'" class="quote_edit" title="'.lang('editquote').'">[E]</a>';
     }
 
     function edit_quote_page($action, $quoteid, $quotetxt, $edited_quote_html='')
@@ -482,7 +482,7 @@ abstract class BaseTemplate {
       <td class="quote_no" onclick="javascript:this.firstElementChild.click();">
        <input type="radio" id="qn'.$quoteid.'" name="q'.$quoteid.'" value="n'.$quoteid.'"><label for="qn'.$quoteid.'">'.lang('quote_queue_no').'</label>
       </td>
-      <td>'.$this->edit_quote_button($quoteid).$this->format_possible_dupes($dupes).'
+      <td>'.$this->edit_quote_button($quoteid, 1).$this->format_possible_dupes($dupes).'
         <div class="quote_quote">
 		'.$quotetxt.'
         </div>
