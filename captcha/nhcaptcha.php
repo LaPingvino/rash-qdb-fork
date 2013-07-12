@@ -45,9 +45,9 @@ class nhCAPTCHA extends baseCAPTCHA {
     {
 	if (parent::check_passthru($type)) return 0;
 	if ($_POST['CAPTCHA']) {
-	    $c_qid = $_POST['CAPTCHAquestionid'];
+	    $c_qid = isset($_POST['CAPTCHAquestionid']) ? $_POST['CAPTCHAquestionid'] : -1;
 	    $c_ans = $_POST['CAPTCHAanswer'];
-	    if (preg_match('/^[0-9]+$/', $c_qid) && ($qid >= 0)) {
+	    if (preg_match('/^[0-9]+$/', $c_qid) && ($c_qid >= 0)) {
 		$c_qid = ($c_qid % count($this->questions));
 		if ($c_ans == $this->questions[$c_qid]['char']) {
 		    return 0;
