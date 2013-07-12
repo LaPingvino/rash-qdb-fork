@@ -86,6 +86,8 @@ If (isset($_POST['submit'])) {
 		  'captcha' => "'".$_POST['captcha']."'",
 		  'use_captcha' => "array(".(isset($_POST['use_captcha']) ? ("'".implode("'=>1, '", $_POST['use_captcha'])."'=>1"): '').")",
 		  'spam_regex' => "'".$_POST['spam_regex']."'",
+		  'auto_block_spam_ip' => $_POST['auto_block_spam_ip'],
+		  'spam_expire_time' => $_POST['spam_expire_time'],
 		  'admin_email' => "'".$_POST['admin_email']."'",
 		  'quote_limit' => $_POST['quote_limit'],
 		  'page_limit' => $_POST['page_limit'],
@@ -299,6 +301,14 @@ If (isset($_POST['submit'])) {
  <tr>
   <td>Spam Regex
        <td><input type="text" name="spam_regex" value=""> (Any submitted quote matching this regex will go to spam table)
+ </tr>
+ <tr>
+  <td>Autoblock spam by IP
+       <td><input type="text" name="auto_block_spam_ip" value="1"> (Quote adding is automatically blocked, if it is submitted from IP address appearing this many times in the spamlog)
+ </tr>
+ <tr>
+  <td>Spam TTL
+       <td><input type="text" name="spam_expire_time" value="0"> (Spam is removed from spamlog after this many seconds. 0=never)
  </tr>
  <tr>
   <td>User Login required

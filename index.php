@@ -1026,7 +1026,6 @@ function edit_quote($action, $method, $quoteid)
     print $TEMPLATE->edit_quote_page($action, $quoteid, $quotxt, $innerhtml);
 }
 
-
 function add_quote_do_inner()
 {
     global $CONFIG, $TEMPLATE, $db;
@@ -1038,11 +1037,22 @@ function add_quote_do_inner()
     $ip = $_SERVER['REMOTE_ADDR'];
     if ($spamre && preg_match('/'.$spamre.'/', $quotxt)) {
 	$table = 'spamlog';
+	if (isset($CONFIG['spam_expire_time']) && ($CONFIG['spam_expire_time'] > 0)) {
+	    $sql = 'DELETE FROM '.db_tablename('spamlog').' WHERE date<'.$db->quote($t + $CONFIG['spam_expire_time']);
+	    db_query($sql);
+	}
     } elseif ($CONFIG['moderated_quotes']) {
 	$table = 'queue';
     } else {
 	$table = 'quotes';
     }
+
+    if (isset($CONFIG['auto_block_spam_ip']) && ($CONFIG['auto_block_spam_ip'] > 0)) {
+	$sql = 'SELECT COUNT(*) FROM '.db_tablename('spamlog').' WHERE submitip='.$db->quote($ip);
+	$cnt = db_query_singlevalue($sql);
+	if ($cnt >= $CONFIG['auto_block_spam_ip']) return $innerhtml;
+    }
+
     $db->query("INSERT INTO ".db_tablename($table)." (quote, submitip, date) VALUES(".$db->quote($quotxt).", ".$db->quote($ip).", ".$t.")");
     return $innerhtml;
 }
