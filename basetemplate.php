@@ -286,7 +286,7 @@ abstract class BaseTemplate {
     {
 	return '<tr>
 <td class="quote_delete" onclick="javascript:this.firstElementChild.click();">
-	<label>'.lang('flag_quote_delete').'<input type="radio" name="q'.$quoteid.'" value="d'.$quoteid.'"></label>
+	<input type="radio" id="qd'.$quoteid.'" name="q'.$quoteid.'" value="d'.$quoteid.'"><label for="qd'.$quoteid.'">'.lang('flag_quote_delete').'</label>
 </td>
 <td>
 <div class="quote_quote">'.$quotetxt.'
@@ -294,7 +294,7 @@ abstract class BaseTemplate {
 </div>
 </td>
 <td class="quote_unflag" onclick="javascript:this.firstElementChild.click();">
-	<label><input type="radio" name="q'.$quoteid.'" value="u'.$quoteid.'">'.lang('flag_quote_unflag').'</label>
+	<input type="radio" id="qu'.$quoteid.'" name="q'.$quoteid.'" value="u'.$quoteid.'"><label for="qu'.$quoteid.'">'.lang('flag_quote_unflag').'</label>
 </td>
 </tr>';
     }
@@ -480,7 +480,7 @@ abstract class BaseTemplate {
     {
 	return '     <tr>
       <td class="quote_no" onclick="javascript:this.firstElementChild.click();">
-       <label>'.lang('quote_queue_no').'<input type="radio" name="q'.$quoteid.'" value="n'.$quoteid.'"></label>
+       <input type="radio" id="qn'.$quoteid.'" name="q'.$quoteid.'" value="n'.$quoteid.'"><label for="qn'.$quoteid.'">'.lang('quote_queue_no').'</label>
       </td>
       <td>'.$this->edit_quote_button($quoteid).$this->format_possible_dupes($dupes).'
         <div class="quote_quote">
@@ -488,7 +488,7 @@ abstract class BaseTemplate {
         </div>
       </td>
 	  <td class="quote_yes" onclick="javascript:this.firstElementChild.click();">
-       <label><input type="radio" name="q'.$quoteid.'" value="y'.$quoteid.'" style="text-align: right">'.lang('quote_queue_yes').'</label>
+       <input type="radio" id="qy'.$quoteid.'" name="q'.$quoteid.'" value="y'.$quoteid.'" style="text-align: right"><label for="qy'.$quoteid.'">'.lang('quote_queue_yes').'</label>
 	  </td>
      </tr>
 ';

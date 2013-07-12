@@ -28,6 +28,38 @@ input:focus {
     background-color: #fffff0;
 }
 
+.quote_delete input[type=radio],
+.quote_unflag input[type=radio],
+.quote_no input[type=radio],
+.quote_yes input[type=radio] {
+    display:none;
+}
+td.quote_no, td.quote_yes,
+td.quote_delete, td.quote_unflag {
+    padding:0 !important;
+    margin: 0 !important;
+}
+.quote_delete label,
+.quote_unflag label,
+.quote_no label,
+.quote_yes label {
+    padding: 2em !important;
+    margin: 0 !important;
+    border: 2px solid transparent;
+}
+.quote_delete :checked + label,
+.quote_no :checked + label {
+    border:2px solid red;
+    text-shadow: black 1px 0px;
+    background-color:pink;
+}
+.quote_unflag :checked + label,
+.quote_yes :checked + label {
+    border:2px solid green;
+    text-shadow: black 1px 0px;
+    background-color:lightgreen;
+}
+
 .maybe_dupe {
   font-weight: bold;
 }
