@@ -33,10 +33,10 @@ function mangle_quote(textareaid)
   var txt = txtarea.value;
 
   /* fix whitespace */
+  txt = txt.replace(/\t/gm, " ");
   txt = txt.replace(/^\s+/, "");
   txt = txt.replace(/\s+$/, "");
   txt = txt.replace(/ +$/m, "");
-  txt = txt.replace(/\t/gm, " ");
 
   /* try to fix different timestamp styles */
   var lines = txt.split("\n");
