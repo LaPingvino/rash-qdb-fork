@@ -36,7 +36,7 @@ header('Content-type: text/html; charset=utf-8');
   if(!isset($_SESSION['logged_in'])){
       print '<a href="?'.urlargs('admin').'" id="site_nav_admin">'.lang('menu_admin').'</a>';
   } else {
-      print sprintf(lang('logged_in_as'), htmlspecialchars($_SESSION['user']));
+      print '<span class="logged_in_as">'.sprintf(lang('logged_in_as'), htmlspecialchars($_SESSION['user'])).'</span>';
   }
 	print '</div>';
 	print $this->get_menu();
