@@ -35,6 +35,8 @@ $CONFIG['auto_flagged_quotes'] = 0; // Quotes are automatically marked checked b
 $CONFIG['captcha'] = 'nocaptcha';
 $CONFIG['use_captcha'] = array('flag'=>1, 'add_quote'=>0, 'register_user'=>1);
 $CONFIG['spam_regex'] = '&lt;a\s+href='; // Any quote matching this regex will go to hidden spam queue.
+$CONFIG['spam_expire_time'] = 0; // Spam expiration, in seconds. 0=never
+$CONFIG['auto_block_spam_ip'] = 2; // Automatically block, if ip appears this many times in spamlog. 0=never
 $CONFIG['timezone'] = 'America/New_York';
 $CONFIG['news_time_format'] = 'Y-m-d';
 $CONFIG['quote_time_format'] = 'F j, Y';
