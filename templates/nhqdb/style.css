@@ -28,34 +28,53 @@ input:focus {
     background-color: #fffff0;
 }
 
+
+table.admin_queue {
+    height: 100%;
+    width: 100%;
+}
+.admin_queue tr:nth-child(odd) {
+	background-color: #ffffff;
+}
+.admin_queue tr {
+	background-color: #f0f0f0;
+}
+.admin_queue .quote_delete,
+.admin_queue .quote_unflag,
+.admin_queue .quote_no,
+.admin_queue .quote_yes {
+  height: 100%;
+  padding:0;
+}
+.admin_queue .quote_delete:hover,
+.admin_queue .quote_no:hover {
+  background-color:pink;
+}
+.admin_queue .quote_unflag label:hover,
+.admin_queue .quote_yes label:hover {
+  background-color:lightgreen;
+}
 .quote_delete input[type=radio],
 .quote_unflag input[type=radio],
 .quote_no input[type=radio],
 .quote_yes input[type=radio] {
     display:none;
 }
-td.quote_no, td.quote_yes,
-td.quote_delete, td.quote_unflag {
-    padding:0 !important;
-    margin: 0 !important;
-}
 .quote_delete label,
 .quote_unflag label,
 .quote_no label,
 .quote_yes label {
-    padding: 2em !important;
-    margin: 0 !important;
-    border: 2px solid transparent;
+    padding: 0 2em;
+    height: 100%;
+    display:block;
 }
 .quote_delete :checked + label,
 .quote_no :checked + label {
-    border:2px solid red;
     text-shadow: black 1px 0px;
     background-color:pink;
 }
 .quote_unflag :checked + label,
 .quote_yes :checked + label {
-    border:2px solid green;
     text-shadow: black 1px 0px;
     background-color:lightgreen;
 }
@@ -210,27 +229,6 @@ div#site_admin_nav_lower_infobar{
 html>body div#site_admin_nav{ /* hack for firefox, disabled in opera and ie */
 	margin-top: 0pt;
 }
-.admin_queue tr:nth-child(odd) {
-	background-color: #ffffff;
-}
-.admin_queue tr {
-	background-color: #f0f0f0;
-}
-.admin_queue .quote_delete,
-.admin_queue .quote_unflag,
-.admin_queue .quote_no,
-.admin_queue .quote_yes {
-  padding: 2em;
-}
-.admin_queue .quote_delete:hover,
-.admin_queue .quote_no:hover {
-  background-color:pink;
-}
-.admin_queue .quote_unflag:hover,
-.admin_queue .quote_yes:hover {
-  background-color:lightgreen;
-}
-
 
 
 /* site_nav_*: navigation on the top, for everyone */
