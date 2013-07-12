@@ -50,7 +50,7 @@ abstract class BaseTemplate {
 	if ($menudata) {
 	    $arr = array();
 	    foreach ($menudata as $m) {
-		$arr[] = '<a href="'.$m['url'].'" id="'.$m['id'].'">'.lang($m['txt']).'</a>';
+		$arr[] = '<a href="'.$m['url'].'" id="'.$m['id'].'">'.str_replace(' ', '&nbsp;', lang($m['txt'])).'</a>';
 	    }
 	    $str = join($this->menu_join_str, $arr);
 	}
