@@ -286,12 +286,13 @@ div#add_outputmsg_quote{
 
 div.quote_pagenums{
 	text-align: center;
+	margin-bottom: 0.5em;
 }
 .quote_pagenums .sep { display: none; }
 .quote_pagenums a,
 .quote_pagenums span {
     width:3em;
-    padding:0 1em;
+    padding:0.25em 1em;
 }
 .quote_pagenums a:hover {
     background-color: lightgrey;
