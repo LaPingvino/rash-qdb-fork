@@ -52,7 +52,7 @@ abstract class BaseTemplate {
 	    foreach ($menudata as $m) {
 		$arr[] = '<a href="'.$m['url'].'" id="'.$m['id'].'">'.str_replace(' ', '&nbsp;', lang($m['txt'])).'</a>';
 	    }
-	    $str = join($this->menu_join_str, $arr);
+	    $str = join('<span class="sep">'.$this->menu_join_str.'</span>', $arr);
 	}
 	return sprintf($this->menu_wrap_str, $str);
     }

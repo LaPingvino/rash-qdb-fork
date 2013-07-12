@@ -175,6 +175,10 @@ span.quote_minus:hover {
 .news_date{
 	font-weight: bold;
 }
+.news_news {
+    padding-left: 0.5em;
+    padding-bottom: 0.5em;
+}
 #home_greeting{
 	float: left;
 	width: 49%;
@@ -182,6 +186,7 @@ span.quote_minus:hover {
 #news {
 	float: right;
 	width: 49%;
+	padding: 3px;
 }
 
 
@@ -199,6 +204,7 @@ div#site_admin_nav_upper_linkbar{
 div#site_admin_nav_lower_infobar{
 	background-color: #0099d7;
 	text-align: right;
+	padding: 1px;
 }
 html>body div#site_admin_nav{ /* hack for firefox, disabled in opera and ie */
 	margin-top: 0pt;
@@ -258,6 +264,16 @@ div#site_nav{
 	position: relative;
 	z-index: 0;
 }
+
+#site_nav .sep,
+#site_admin_nav .sep {
+    color: #ccc;
+}
+.site_nav_lower_linkbar {
+    padding: 3px;
+}
+
+
 
 
 /* user-based functions */
