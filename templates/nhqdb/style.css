@@ -318,6 +318,9 @@ div.quote_pagenums{
 table.users {
     border-collapse:collapse;
 }
+table.users .curr {
+    background-color: #ddd;
+}
 
 table.users tr:hover td {
     background-color: #e0e0e0;

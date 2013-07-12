@@ -779,7 +779,7 @@ function edit_users($method, $who)
 
     $res = $db->query("SELECT * FROM ".db_tablename('users')." ORDER BY level asc, user desc");
     while ($row = $res->fetch()) {
-	$innerhtml .= $TEMPLATE->edit_user_page_table_row($row['id'], htmlspecialchars($row['user']), htmlspecialchars($row['password']), $row['level']);
+	$innerhtml .= $TEMPLATE->edit_user_page_table_row($row['id'], htmlspecialchars($row['user']), htmlspecialchars($row['password']), $row['level'], ($who == $row['id']));
     }
     print $TEMPLATE->edit_user_page_table($innerhtml);
 }

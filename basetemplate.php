@@ -398,9 +398,9 @@ abstract class BaseTemplate {
 
     }
 
-    function edit_user_page_table_row($id, $user, $password, $level)
+    function edit_user_page_table_row($id, $user, $password, $level, $current=0)
     {
-	return '    <tr>
+	return '    <tr'.($current ? ' class="curr"' : '').'>
      <td>'.$id.'</td>
      <td><a href="?'.urlargs('users','edit',$id).'">'.$user.'</a></td>
      <td>'.$password.'</td>
