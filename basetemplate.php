@@ -96,10 +96,10 @@ abstract class BaseTemplate {
     function news_item($news, $date, $id=null, $mode=0)
     {
 	if ($mode == 0) {
-	    return '<div class="news_entry"><div class="news_date">'.$date.'</div>'.
-	    '<div class="news_news">'.$news.'</div></div>';
+	    return '<div class="news_entry"><p class="news_date">'.$date.'</p>'.
+	    '<div class="news_news"><span class="space">&nbsp;</span>'.$news.'</div></div>';
 	} else {
-	    $str = '<div class="news_entry"><div class="news_date"><a href="?'.urlargs('edit_news','edit',$id).'">'.$date.'</a></div>'.
+	    $str = '<div class="news_entry"><p class="news_date"><a href="?'.urlargs('edit_news','edit',$id).'">'.$date.'</a></p>'.
 		'<div class="news_news">'.$news.'</div></div>';
 
 	    if ($mode == 2) $str = '<div class="hilight_news_entry">'.$str.'</div>';
@@ -585,6 +585,7 @@ document.write(\'<a href="javascript:ajax_vote('.$quoteid.',-1);" '.$s.' title="
 	    $str .= '<h1 id="quote_origin-name">'.$title.'</h1>';
 	$str .= $pagenumbers;
 	$str .= '<div id="quote_list">'.$quotes.'</div>';
+	$str .= '<p>';
 	$str .= $pagenumbers;
 	return $str;
     }

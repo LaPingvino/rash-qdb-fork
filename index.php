@@ -469,7 +469,7 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 	$x++;
     } while ($x < $page_default);
 
-    array_push($parts, '<span class="currpage">'.$page_default.'</span>');
+    array_push($parts, '<span class="currpage"><b>'.$page_default.'</b></span>');
 
     $x = ($page_default + 1);
 
