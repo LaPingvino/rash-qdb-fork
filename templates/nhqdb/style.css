@@ -291,7 +291,9 @@ div.quote_pagenums{
 .quote_pagenums .sep { display: none; }
 .quote_pagenums a,
 .quote_pagenums span {
-    width:3em;
+    display: inline-block;
+    width:2em;
+    min-width:2em;
     padding:0.25em 1em;
 }
 .quote_pagenums a:hover {
