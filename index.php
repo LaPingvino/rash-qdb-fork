@@ -414,11 +414,9 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
     global $CONFIG, $db;
     $numrows = $db->query("SELECT COUNT(id) AS cnt FROM ".db_tablename('quotes').' WHERE (flag!=3)')->fetch();
     $testrows = $numrows['cnt'];
+    $parts = array();
 
     $pagenum = 0;
-
-    $ret = '';
-
     $sep = '<span class="sep">&nbsp;&nbsp;</span>';
     $skipamount = 10;
 
@@ -438,74 +436,69 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 	$page_base++;
 	$page_limit -= 2;
     } while ($page_limit > 1);
-    $ret .= '<div class="quote_pagenums">';
 
     if ($page_default != 1) {
-	$ret .= '<a class="first" href="?'.urlargs(strtolower($origin),'1').'">'.lang('page_first').'</a>';
+	array_push($parts, '<a class="first" href="?'.urlargs(strtolower($origin),'1').'">'.lang('page_first').'</a>');
     } else {
-	$ret .= '<span class="nolink first">'.lang('page_first').'</span>';
+	array_push($parts, '<span class="first">'.lang('page_first').'</span>');
     }
-    $ret .= $sep;
 
     if ($page_default-$skipamount >= 1) {
-	$ret .= '<a class="skipback" href="?'.urlargs(strtolower($origin),
+	array_push($parts, '<a class="skipback" href="?'.urlargs(strtolower($origin),
 					     ((($page_default-$skipamount) > 1) ? ($page_default-$skipamount) : (1)))
-	    .'">'.-($skipamount).'</a>';
+		   .'">'.-($skipamount).'</a>');
     } else {
-	$ret .= '<span class="nolink skipback">'.-($skipamount).'</span>';
+	array_push($parts, '<span class="skipback">'.-($skipamount).'</span>');
     }
-    $ret .= $sep;
 
     if (($page_default - $page_base) > 1) {
-	$ret .= '<span class="ellipsis">...</span>'.$sep;
+	array_push($parts, '<span class="ellipsis">...</span>');
     } else {
-	$ret .= '<span class="noellipsis">&nbsp;</span>'.$sep;
+	array_push($parts, '<span class="noellipsis"></span>');
     }
     $x = ($page_default - $page_base);
 
     do {
 	if($x > 0)
-	    $ret .= '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>'.$sep;
+	    array_push($parts, '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>');
 	else
-	    $ret .= '<span class="nopage">&nbsp;</span>'.$sep;
+	    array_push($parts, '<span class="nopage"></span>');
 	$x++;
     } while ($x < $page_default);
 
-    $ret .= '<span class="nolink currpage">'.$page_default.'</span>'.$sep;
+    array_push($parts, '<span class="currpage">'.$page_default.'</span>');
 
     $x = ($page_default + 1);
 
     do {
 	if($x <= $pagenum)
-	    $ret .= '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>'.$sep;
+	    array_push($parts, '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>');
 	else
-	    $ret .= '<span class="nopage">&nbsp;</span>'.$sep;
+	    array_push($parts, '<span class="nopage"></span>');
 	$x++;
     } while ($x < ($page_default + $page_base + 1));
 
     if (($page_default + $page_base) < $pagenum) {
-	$ret .= '<span class="ellipsis">...</span>'.$sep;
+	array_push($parts, '<span class="ellipsis">...</span>');
     } else {
-	$ret .= '<span class="noellipsis">&nbsp;</span>'.$sep;
+	array_push($parts, '<span class="noellipsis"></span>');
     }
 
     if ($page_default+$skipamount <= $pagenum) {
-	$ret .= '<a class="skipfwd" href="?'.urlargs(strtolower($origin),
+	array_push($parts, '<a class="skipfwd" href="?'.urlargs(strtolower($origin),
 				     ((($page_default+$skipamount) < $pagenum) ? ($page_default+$skipamount) : ($pagenum)))
-		.'">+'.$skipamount.'</a>';
+		   .'">+'.$skipamount.'</a>');
     } else {
-	$ret .= '<span class="nolink skipfwd">+'.$skipamount.'</span>';
+	array_push($parts, '<span class="skipfwd">+'.$skipamount.'</span>');
     }
-    $ret .= $sep;
 
     if ($page_default < $pagenum) {
-	$ret .= '<a href="?'.urlargs(strtolower($origin),$pagenum).'">'.lang('page_last').'</a>';
+	array_push($parts, '<a class="last" href="?'.urlargs(strtolower($origin),$pagenum).'">'.lang('page_last').'</a>');
     } else {
-	$ret .= '<span class="nolink last">'.lang('page_last').'</span>';
+	array_push($parts, '<span class="last">'.lang('page_last').'</span>');
     }
 
-    $ret .= "</div>\n";
-    return $ret;
+    return '<div class="quote_pagenums">' . join($sep, $parts) . "</div>\n";
 }
 
 
