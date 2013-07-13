@@ -175,8 +175,11 @@ function vote($quote_num, $method, $ajaxy=FALSE)
 {
     global $db, $TEMPLATE;
 
-    $qid = $db->query("SELECT quote_id FROM ".db_tablename('tracking')." WHERE user_ip=".$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quote_num))->fetch();
-    if (isset($qid) && $qid == $quote_num) {
+    $ip = $_SERVER['REMOTE_ADDR'];
+    $sql = "SELECT quote_id FROM ".db_tablename('tracking')." WHERE user_ip=".$db->quote($ip).' AND quote_id='.$db->quote((int)$quote_num);
+    $qid = $db->query($sql)->fetch();
+
+    if (isset($qid) && $qid['quote_id'] == $quote_num) {
 	if ($ajaxy) return 'ALREADY_VOTED';
 	$TEMPLATE->add_message(lang('tracking_check_2'));
 	return;
@@ -192,7 +195,7 @@ function vote($quote_num, $method, $ajaxy=FALSE)
     }
     if ($vote != 0) {
 	$t = time();
-	$res = $db->query("INSERT INTO ".db_tablename('tracking')." (user_ip, quote_id, vote, date) VALUES(".$db->quote($_SESSION['voteip']).", ".$db->quote($quote_num).", ".$vote.", ".$db->quote($t).")");
+	$res = $db->query("INSERT INTO ".db_tablename('tracking')." (user_ip, quote_id, vote, date) VALUES(".$db->quote($ip).", ".$db->quote($quote_num).", ".$vote.", ".$db->quote($t).")");
 	if ($ajaxy) return 'VOTE_OK';
 	$TEMPLATE->add_message(lang('tracking_check_1'));
     }
@@ -515,7 +518,8 @@ function user_can_vote_quote($quoteid)
 {
     global $CONFIG, $db;
 
-    $row = $db->query('SELECT vote FROM '.db_tablename('tracking').' WHERE user_ip='.$db->quote($_SESSION['voteip']).' AND quote_id='.$db->quote((int)$quoteid))->fetch();
+    $ip = $_SERVER['REMOTE_ADDR'];
+    $row = $db->query('SELECT vote FROM '.db_tablename('tracking').' WHERE user_ip='.$db->quote($ip).' AND quote_id='.$db->quote((int)$quoteid))->fetch();
 
     if (isset($CONFIG['login_required']) && ($CONFIG['login_required'] == 1) && !isset($_SESSION['logged_in']))
 	return 2;
