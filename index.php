@@ -458,12 +458,16 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
 
     if (($page_default - $page_base) > 1) {
 	$ret .= '<span class="ellipsis">...</span>'.$sep;
+    } else {
+	$ret .= '<span class="noellipsis">&nbsp;</span>'.$sep;
     }
     $x = ($page_default - $page_base);
 
     do {
 	if($x > 0)
 	    $ret .= '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>'.$sep;
+	else
+	    $ret .= '<span class="nopage">&nbsp;</span>'.$sep;
 	$x++;
     } while ($x < $page_default);
 
@@ -474,11 +478,15 @@ function page_numbers($origin, $quote_limit, $page_default, $page_limit)
     do {
 	if($x <= $pagenum)
 	    $ret .= '<a href="?'.urlargs(strtolower($origin),$x).'">'.$x.'</a>'.$sep;
+	else
+	    $ret .= '<span class="nopage">&nbsp;</span>'.$sep;
 	$x++;
     } while ($x < ($page_default + $page_base + 1));
 
     if (($page_default + $page_base) < $pagenum) {
 	$ret .= '<span class="ellipsis">...</span>'.$sep;
+    } else {
+	$ret .= '<span class="noellipsis">&nbsp;</span>'.$sep;
     }
 
     if ($page_default+$skipamount <= $pagenum) {
