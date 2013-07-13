@@ -301,6 +301,7 @@ div.quote_pagenums{
 .quote_pagenums .currpage {
     font-weight: bold;
     color: black;
+    background-color: #bfedff;
 }
 .quote_pagenums span {
     color: #888;
