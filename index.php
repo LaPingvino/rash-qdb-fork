@@ -555,7 +555,8 @@ function quote_generation($query, $origin, $page = 1, $quote_limit = 50, $page_l
 	$nquotes++;
 	$canvote = user_can_vote_quote($row['id']);
 	$datefmt = date($CONFIG['quote_time_format'], $row['date']);
-	$inner .= $TEMPLATE->quote_iter($row['id'], $row['rating'], mangle_quote_text($row['quote']), ($row['flag'] == 0), $canvote, $datefmt);
+	$canflag = ($row['flag'] == 0);
+	$inner .= $TEMPLATE->quote_iter($row['id'], $row['rating'], mangle_quote_text($row['quote']), $canflag, $canvote, $datefmt);
     }
 
     if (!$nquotes)
