@@ -452,8 +452,8 @@ abstract class BaseTemplate {
 	'<div id="admin_all"><p>'.lang('user_login_greeting').'</p>
     <form action="?'.urlargs('login','login').'" method="post">
     <table>
-    <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="user_login_username-box" /></td></tr>
-    <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="user_login_password-box" /></td></tr>
+    <tr><td><label for="user_login_username-box">'.lang('login_username').'</label></td><td><input type="text" name="rash_username" size="8" id="user_login_username-box" /></td></tr>
+    <tr><td><label for="user_login_password-box">'.lang('login_password').'</label></td><td><input type="password" name="rash_password" size="8" id="user_login_password-box" /></td></tr>
     <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"><label for="remember_login_input"></label></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="user_login_submit-button" /></td></tr>
     </table>
@@ -466,8 +466,8 @@ abstract class BaseTemplate {
 	'<div id="admin_all"><p>'.lang('admin_login_greeting').'</p>
     <form action="?'.urlargs('admin','login').'" method="post">
     <table>
-    <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="admin_login_username-box" /></td></tr>
-    <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="admin_login_password-box" /></td></tr>
+    <tr><td><label for="admin_login_username-box">'.lang('login_username').'</label></td><td><input type="text" name="rash_username" size="8" id="admin_login_username-box" /></td></tr>
+    <tr><td><label for="admin_login_password-box">'.lang('login_password').'</label></td><td><input type="password" name="rash_password" size="8" id="admin_login_password-box" /></td></tr>
     <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"><label for="remember_login_input"></label></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="admin_login_submit-button" /></td></tr>
     </table>
