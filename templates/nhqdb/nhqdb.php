@@ -206,7 +206,7 @@ function flag_queue_page($inner_html)
 &nbsp;&nbsp;&nbsp;&nbsp;
 <input type="submit" value="'.lang('flag_quote_adminpage_unflag_all_btn').'" name="unflag_all">
 <input type="submit" value="'.lang('flag_quote_adminpage_delete_all_btn').'" name="delete_all">
-'.lang('flag_quote_adminpage_verify').'<input type="checkbox" name="do_all">
+'.lang('flag_quote_adminpage_verify').'<input type="checkbox" name="do_all" id="do_all"><label for="do_all"></label>
 </form>';
 
     return $str;
@@ -297,7 +297,7 @@ function edit_user_page_table($innerhtml)
     $str .= $innerhtml;
 
     $str .= '  </table>
-  <input type="submit" value="'.lang('users_list_submit_btn').'" />&nbsp;'.lang('users_list_verify').' <input type="checkbox" name="verify" value="1" />
+  <input type="submit" value="'.lang('users_list_submit_btn').'" />&nbsp;'.lang('users_list_verify').' <input type="checkbox" name="verify" value="1" id="verify_submit"/><label for="verify_submit"></label>
  </form>
 ';
 
@@ -312,7 +312,7 @@ function edit_user_page_table($innerhtml)
     <table>
     <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="user_login_username-box" /></td></tr>
     <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="user_login_password-box" /></td></tr>
-    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"></td></tr>
+    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"><label for="remember_login_input"></label></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="user_login_submit-button" /></td></tr>
     </table>
     </form></div>';
@@ -326,7 +326,7 @@ function admin_login_page()
     <table>
     <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="admin_login_username-box" /></td></tr>
     <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="admin_login_password-box" /></td></tr>
-    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"></td></tr>
+    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"><label for="remember_login_input"></label></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="admin_login_submit-button" /></td></tr>
     </table>
     </form></div>';

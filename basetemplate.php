@@ -135,7 +135,7 @@ abstract class BaseTemplate {
   <input type="submit" value="'.lang('preview_news_btn').'" id="edit_preview" name="preview" />
   <input type="submit" value="'.lang('save_news_btn').'" id="edit_news" name="submit" />
   <input type="submit" value="'.lang('delete_news_btn').'" id="delete_news" name="delete" />
-  '.lang('delete_news_verify').'<input type="checkbox" name="verify_delete">
+  '.lang('delete_news_verify').'<input type="checkbox" name="verify_delete" id="verify_delete"><label for="verify_delete"></label>
   </form></div><p>';
     }
 
@@ -326,7 +326,7 @@ abstract class BaseTemplate {
 &nbsp;&nbsp;&nbsp;&nbsp;
 <input type="submit" value="'.lang('flag_quote_adminpage_unflag_all_btn').'" name="unflag_all">
 <input type="submit" value="'.lang('flag_quote_adminpage_delete_all_btn').'" name="delete_all">
-'.lang('flag_quote_adminpage_verify').'<input type="checkbox" name="do_all">
+'.lang('flag_quote_adminpage_verify').'<input type="checkbox" name="do_all" id="do_all"><label for="do_all"></label>
 </form>';
 
 	return $str;
@@ -417,7 +417,7 @@ abstract class BaseTemplate {
      <td><a href="?'.urlargs('users','edit',$id).'">'.$user.'</a></td>
      <td>'.$password.'</td>
      <td>'.$level.'</td>
-     <td><input type="checkbox" name="d'.$id.'" value="'.$id.'" /></td>
+     <td><input type="checkbox" name="d'.$id.'" value="'.$id.'" id="chkbox_d'.$id.'"/><label for="chkbox_d'.$id.'"></label></td>
     </tr>
 ';
     }
@@ -439,7 +439,7 @@ abstract class BaseTemplate {
 	$str .= $innerhtml;
 
 	$str .= '  </table>
-  <input type="submit" value="'.lang('users_list_submit_btn').'" />&nbsp;'.lang('users_list_verify').' <input type="checkbox" name="verify" value="1" />
+  <input type="submit" value="'.lang('users_list_submit_btn').'" />&nbsp;'.lang('users_list_verify').' <input type="checkbox" name="verify" value="1" id="verify_submit"/><label for="verify_submit"></label>
  </form>
 ';
 
@@ -454,7 +454,7 @@ abstract class BaseTemplate {
     <table>
     <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="user_login_username-box" /></td></tr>
     <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="user_login_password-box" /></td></tr>
-    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"></td></tr>
+    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"><label for="remember_login_input"></label></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="user_login_submit-button" /></td></tr>
     </table>
     </form></div>';
@@ -468,7 +468,7 @@ abstract class BaseTemplate {
     <table>
     <tr><td>'.lang('login_username').'</td><td><input type="text" name="rash_username" size="8" id="admin_login_username-box" /></td></tr>
     <tr><td>'.lang('login_password').'</td><td><input type="password" name="rash_password" size="8" id="admin_login_password-box" /></td></tr>
-    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"></td></tr>
+    <tr><td><label for="remember_login_input">'.lang('login_remember').'</label></td><td><input type="checkbox" name="remember_login" id="remember_login_input"><label for="remember_login_input"></label></td></tr>
     <tr><td></td><td><input type="submit" value="'.lang('login_submit_btn').'" id="admin_login_submit-button" /></td></tr>
     </table>
     </form></div>';
