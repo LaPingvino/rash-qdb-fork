@@ -81,11 +81,23 @@ abstract class BaseTemplate {
     }
 
 
-    function printheader($title, $topleft='', $topright='')
+    function printheader($title, $topleft=null, $topright=null)
     {
-	return '<html><head><title>'.$title.'</title>
+	$str = '<html><head><title>'.$title.'</title>
 <script src="qdb.js" type="text/javascript"></script>
 </head><body>';
+	if ($topleft) $str .= '<h1>'.$topleft.'</h1>';
+	if ($topright) $str .= '<h2>'.$topright.'</h2>';
+	if(!isset($_SESSION['logged_in'])){
+	    print '<a href="?'.urlargs('admin').'" id="login">'.lang('menu_admin').'</a>';
+	} else {
+	    print '<span class="logged_in_as">'.sprintf(lang('logged_in_as'), htmlspecialchars($_SESSION['user'])).'</span>';
+	}
+	$str .= '<div class="menu">'.$this->get_menu().'</div>';
+	$amenu = $this->get_menu(1);
+	if ($amenu) $str .= '<div class="adminmenu">'.$amenu.'</div>';
+	$str .= $this->get_messages();
+	return $str;
     }
 
     function printfooter($db_stats=null)

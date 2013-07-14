@@ -22,7 +22,14 @@ if (!isset($CONFIG['min_quote_length'])) $CONFIG['min_quote_length'] = 15;
 require('db.php');
 require('util_funcs.php');
 
-require("language/{$CONFIG['language']}.lng");
+if (isset($_GET['nolang'])) {
+    mk_cookie('nolang', $_GET['nolang']);
+    header('Location: http://' . $_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']));
+    exit;
+}
+
+if (!(isset($_COOKIE['nolang']) && ($_COOKIE['nolang'] == '1')))
+    require("language/{$CONFIG['language']}.lng");
 
 require('basecaptcha.php');
 require("captcha/{$CONFIG['captcha']}.php");
@@ -30,6 +37,20 @@ require("captcha/{$CONFIG['captcha']}.php");
 $CAPTCHA->init_settings($CONFIG['use_captcha']);
 
 require('basetemplate.php');
+
+if (isset($_GET['template']) && preg_match('/^[a-z]+$/', $_GET['template'])) {
+    mk_cookie('template', $_GET['template']);
+    header('Location: http://' . $_SERVER['HTTP_HOST'].dirname($_SERVER['PHP_SELF']));
+    exit;
+}
+
+if (isset($_COOKIE['template']) && preg_match('/^[a-z]+$/', $_COOKIE['template'])) {
+    $t = $_COOKIE['template'];
+    $tf = './templates/'.$t.'/'.$t.'.php';
+    if (file_exists($tf))
+	$CONFIG['template'] = $tf;
+}
+
 require($CONFIG['template']);
 
 date_default_timezone_set($CONFIG['timezone']);
@@ -1146,7 +1167,7 @@ $page = explode($CONFIG['GET_SEPARATOR'], $_SERVER['QUERY_STRING']);
 
 
 if(!($page[0] === 'rss' || $page[0] === 'ajaxvote'))
-    $TEMPLATE->printheader(title($page[0]), $CONFIG['site_short_title'], $CONFIG['site_long_title']);
+    print $TEMPLATE->printheader(title($page[0]), $CONFIG['site_short_title'], $CONFIG['site_long_title']);
 
 $page[1] = (isset($page[1]) ? $page[1] : null);
 $page[2] = (isset($page[2]) ? $page[2] : null);
@@ -1350,6 +1371,6 @@ switch($page[0])
 
 }
 if(!($page[0] === 'rss' || $page[0] === 'ajaxvote'))
-    $TEMPLATE->printfooter(get_db_stats());
+    print $TEMPLATE->printfooter(get_db_stats());
 
 $db = null;
