@@ -181,6 +181,7 @@ function flag($quote_num, $method)
 
     if ($method == 'verdict') {
 	$ret = handle_captcha('flag', 'flag_do_inner', $row);
+	if (is_string($ret)) $TEMPLATE->add_message($ret);
     } else {
 	if($row['flag'] == 2){
 	    $TEMPLATE->add_message(lang('flag_previously_flagged'));
@@ -726,6 +727,7 @@ function register_user($method)
 	    if ($_POST['verifypassword'] == $_POST['password']) {
 		$row = array('username' => $username, 'password' => $_POST['password']);
 		$ret = handle_captcha('register_user', 'register_user_do_inner', $row);
+		if (is_string($ret)) $TEMPLATE->add_message($ret);
 	    } else $TEMPLATE->add_message(lang('password_verification_mismatch'));
 	}
     }
@@ -1101,6 +1103,7 @@ function add_quote($method)
 		$innerhtml = $TEMPLATE->add_quote_preview(mangle_quote_text($quotxt));
 	    } else {
 		$ret = handle_captcha('add_quote', 'add_quote_do_inner');
+		if (is_string($ret)) $TEMPLATE->add_message($ret);
 		$added = 1;
 	    }
 	}
@@ -1152,6 +1155,7 @@ function import_quotes($method)
 	    $regex = $_POST['separator_regex'];
 	} else {
 	    $ret = handle_captcha('import_quotes', 'import_quotes_do_inner');
+	    if (is_string($ret)) $TEMPLATE->add_message($ret);
 	    $added++;
 	}
     }
