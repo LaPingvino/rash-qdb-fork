@@ -147,7 +147,7 @@ function rash_rss()
     $items = '';
     while($row=$res->fetch()) {
 	$title = $CONFIG['rss_url']."/?".$row['id'];
-	$desc = mangle_quote_text(htmlspecialchars($row['quote']));
+	$desc = htmlspecialchars(mangle_quote_text($row['quote']));
 	$items .= $TEMPLATE->rss_feed_item($title, $desc, $title);
     }
     print $TEMPLATE->rss_feed($CONFIG['rss_title'], $CONFIG['rss_desc'], $CONFIG['rss_url'], $items);
